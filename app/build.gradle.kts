@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.pj_ourschool"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.pj_ourschool"
         minSdk = 34
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

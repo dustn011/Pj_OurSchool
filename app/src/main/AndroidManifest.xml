@@ -21,6 +21,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".Time" android:label="Time"/>
+        <activity android:name=".Campus" android:label="Campus"/>
+        <activity android:name=".ShuttleBus" android:label="ShuttleBus"/>
+        <activity android:name=".Chat" android:label="Chat"/>
+
+
     </application>
 
 </manifest>
