@@ -7,13 +7,13 @@
 
     <!-- 상단 헤더 -->
     <LinearLayout
+        android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center_vertical"
-        android:background="#3557C8"
-        >
+        android:background="#3557C8">
 
         <ImageView
             android:id="@+id/left_arrow"
@@ -38,8 +38,15 @@
 
     </LinearLayout>
 
-    <!-- 가운데 ui 만드는 곳 -->
 
+    <!-- 가운데 ui -->
+    <com.kakao.vectormap.MapView
+        android:id="@+id/mapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header"
+        android:layout_above="@id/bottom_menu"
+        />
 
 
 

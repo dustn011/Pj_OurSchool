@@ -8,6 +8,14 @@ android {
     compileSdk = 35
 
     defaultConfig {
+
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")        // 추가
+            abiFilters.add("x86_64")     // 추가
+
+        }
         applicationId = "com.example.pj_ourschool"
         minSdk = 34
         targetSdk = 35
@@ -15,6 +23,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"8657f921e8595e3efa4a2e0663545bbe\"")
+    }
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
     }
 
     buildTypes {
@@ -33,6 +46,9 @@ android {
 }
 
 dependencies {
+
+    implementation("com.kakao.maps.open:android:2.12.13")
+    implementation ("com.kakao.sdk:v2-user:2.21.1")
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

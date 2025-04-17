@@ -17,6 +17,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -24,7 +26,29 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.sql.Connection
+import java.sql.DriverManager
 
+
+
+// Backend 필수 코드. KYS
+object MSSQLConnector {
+    private const val URL = "jdbc:jtds:sqlserver://112.72.143.143:1433;databaseName=DB"
+    private const val USER = "엉구"
+    private const val PASSWORD = "1234"
+
+    suspend fun getConnection(): Connection? {
+        return withContext(Dispatchers.IO) {
+            try {
+                Class.forName("net.sourceforge.jtds.jdbc.Driver")
+                DriverManager.getConnection(URL, USER, PASSWORD)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+}
 
 
 class MainActivity : AppCompatActivity() {
@@ -37,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var busImageView: ImageView
     private lateinit var chatImageView: ImageView
     private lateinit var profileImageView: ImageView
-    private lateinit var plusScreen1: CardView
+    private lateinit var plusScreen1: LinearLayout
     private lateinit var plusScreen2: CardView
     private lateinit var plusScreen3: CardView
     private lateinit var plusScreen1TextView: TextView // 추가
@@ -47,14 +71,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val timeImageView: ImageView = findViewById(R.id.time)
-        val campusImageView: ImageView = findViewById(R.id.campus)
-        val busImageView: ImageView = findViewById(R.id.bus)
-        val chatImageView: ImageView = findViewById(R.id.chat)
-        val profileImageView: ImageView = findViewById(R.id.Profile)
-        val plusScreen1: LinearLayout = findViewById(R.id.plusScreen1)
-        val plusScreen2: CardView = findViewById(R.id.plusScreen2)
-        val plusScreen3: CardView = findViewById(R.id.plusScreen3)
+        timeImageView = findViewById(R.id.time)
+        campusImageView = findViewById(R.id.campus)
+        busImageView = findViewById(R.id.bus)
+        chatImageView = findViewById(R.id.chat)
+        profileImageView = findViewById(R.id.Profile)
+        plusScreen1 = findViewById(R.id.plusScreen1) // LinearLayout이 아니라 CardView 타입으로 선언했다면 맞춰줘야 함
+        plusScreen2 = findViewById(R.id.plusScreen2)
+        plusScreen3 = findViewById(R.id.plusScreen3)
 
         weatherImageView = findViewById(R.id.weatherImageView) // 수정됨 (아이콘 연결)
         plusScreen1TextView = findViewById(R.id.plusScreen1TextView)

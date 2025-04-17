@@ -71,7 +71,8 @@
                 android:text="현재 온도: -°C\n날씨: -"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:gravity="center" />
+                android:gravity="center"
+                android:textColor="@android:color/black"/>
         </LinearLayout>
 
         <androidx.cardview.widget.CardView
