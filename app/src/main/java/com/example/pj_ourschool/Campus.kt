@@ -1,5 +1,14 @@
 package com.example.pj_ourschool
 
+//위치 코드
+
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Looper
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.*
+
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
@@ -15,11 +24,19 @@ import com.kakao.vectormap.MapLifeCycleCallback
 import com.kakao.vectormap.MapView
 import com.kakao.vectormap.camera.CameraUpdateFactory
 
+
+
+
+
 class Campus : AppCompatActivity() {
 
     private lateinit var bindingCampus: ActivityCampusBinding
     private lateinit var mapView: MapView
     private var kakaoMap: KakaoMap? = null
+
+    // private lateinit var fusedLocationClient: FusedLocationProviderClient
+    // private lateinit var locationCallback: LocationCallback
+    // private val LOCATION_PERMISSION_REQUEST_CODE = 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,12 +52,18 @@ class Campus : AppCompatActivity() {
         mapView = bindingCampus .mapView
 
 
+        // 위치 fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+
         val leftArrow: ImageView = findViewById(R.id.left_arrow)
         val timeImageView: ImageView = findViewById(R.id.time)
         val busImageView: ImageView = findViewById(R.id.bus)
         val chatImageView: ImageView = findViewById(R.id.chat)
         val profileImageView: ImageView = findViewById(R.id.Profile)
         val homeImageView: ImageView = findViewById(R.id.home)
+
+
+
 
 
         mapView.start(object : MapLifeCycleCallback() {
@@ -59,6 +82,8 @@ class Campus : AppCompatActivity() {
                 val center = LatLng.from(36.652236, 127.494621)
                 val cameraUpdate = CameraUpdateFactory.newCenterPosition(center)
                 map.moveCamera(cameraUpdate)
+
+
             }
         })
 
@@ -99,4 +124,5 @@ class Campus : AppCompatActivity() {
             finish() // 현재 액티비티 종료 (이전 화면으로 이동)
         }
     }
+
 }

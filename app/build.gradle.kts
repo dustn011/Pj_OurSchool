@@ -50,6 +50,8 @@ dependencies {
     implementation("com.kakao.maps.open:android:2.12.13")
     implementation ("com.kakao.sdk:v2-user:2.21.1")
 
+
+
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
