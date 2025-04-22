@@ -35,7 +35,7 @@
             android:id="@+id/Profile"
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:src="@drawable/person" />
+            android:src="@drawable/default_profile" />
 
     </LinearLayout>
 
