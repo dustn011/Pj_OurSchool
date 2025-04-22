@@ -17,7 +17,7 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/school_logo"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -28,7 +28,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -37,6 +36,7 @@
         <activity android:name=".ShuttleBus" android:label="ShuttleBus"/>
         <activity android:name=".Chat" android:label="Chat"/>
         <activity android:name=".Profile" android:label="Profile"/>
+        <activity android:name=".SignupInfoActivity" />
 
 
     </application>

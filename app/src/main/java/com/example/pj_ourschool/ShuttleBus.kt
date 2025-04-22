@@ -52,8 +52,6 @@ class ShuttleBus : AppCompatActivity() {
         }
 
 
-        leftArrow.setOnClickListener {
-            finish() // 현재 액티비티 종료 (이전 화면으로 이동)
-        }
+        leftArrow.setOnClickListener { finish() }
     }
 }

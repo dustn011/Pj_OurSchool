@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#E8EAF6">
 
-    <!-- 상단 헤더 -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
@@ -33,11 +32,10 @@
             android:id="@+id/Profile"
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:src="@drawable/person" />
+            android:src="@drawable/default_profile" />
 
     </LinearLayout>
 
-    <!-- 콘텐츠 (위쪽 카드뷰) -->
     <LinearLayout
         android:id="@+id/content"
         android:layout_width="match_parent"
@@ -82,7 +80,9 @@
             android:layout_margin="16dp"
             app:cardCornerRadius="8dp"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:backgroundTint="@color/white"
+            android:background="@drawable/border_background">
 
             <TextView
                 android:layout_width="match_parent"
@@ -92,6 +92,7 @@
                 android:gravity="center" />
         </androidx.cardview.widget.CardView>
 
+
         <androidx.cardview.widget.CardView
             android:id="@+id/plusScreen3"
             android:layout_width="match_parent"
@@ -99,7 +100,9 @@
             android:layout_margin="16dp"
             app:cardCornerRadius="8dp"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:backgroundTint="@color/white"
+            android:background="@drawable/border_background">
 
             <TextView
                 android:layout_width="match_parent"
@@ -111,7 +114,6 @@
 
     </LinearLayout>
 
-    <!-- 하단 메뉴 (완전 아래 고정) -->
     <LinearLayout
         android:id="@+id/bottom_menu"
         android:layout_width="match_parent"
