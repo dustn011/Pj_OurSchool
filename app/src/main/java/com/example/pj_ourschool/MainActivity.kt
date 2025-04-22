@@ -29,8 +29,6 @@ import retrofit2.http.Query
 import java.sql.Connection
 import java.sql.DriverManager
 
-
-
 // Backend 필수 코드. KYS
 object MSSQLConnector {
     private const val URL = "jdbc:jtds:sqlserver://112.72.143.143:1433;databaseName=DB"
@@ -226,11 +224,13 @@ class MainActivity : AppCompatActivity() {
             "overcast clouds" -> "흐림"
             "shower rain" -> "소나기"
             "moderate rain" -> "비"
+            "drizzle" -> "가벼운 비"
             "light rain" -> "가벼운 비"
             "rain" -> "비"
             "thunderstorm" -> "천둥번개"
             "snow" -> "눈"
             "mist" -> "안개"
+            "light intensity drizzle" -> "가벼운 비"
             else -> english // 번역 없으면 그대로 표시
         }
     }
@@ -239,7 +239,7 @@ class MainActivity : AppCompatActivity() {
             "clear sky" -> R.drawable.ic_sun  // 맑음
             "few clouds", "scattered clouds" -> R.drawable.ic_cloud_sun  // 구름 조금
             "broken clouds", "overcast clouds" -> R.drawable.ic_cloud  // 흐림
-            "shower rain", "rain", "moderate rain", "light rain" -> R.drawable.ic_rain  // 비
+            "shower rain", "rain", "moderate rain", "light rain", "light intensity drizzle", "drizzle" -> R.drawable.ic_rain  // 비
             "thunderstorm" -> R.drawable.ic_thunder  // 천둥번개
             "snow" -> R.drawable.ic_snow  // 눈
             "mist" -> R.drawable.ic_fog  // 안개

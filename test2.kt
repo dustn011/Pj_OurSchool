@@ -1,2 +1,2 @@
-class test2 {
+lass test2 {
 }
