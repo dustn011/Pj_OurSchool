@@ -140,15 +140,17 @@ class SignupInfoActivity : AppCompatActivity() {
                 val Password = editPassword.text.toString().trim()
 
                 if (SchoolId.isNotEmpty() && Password.isNotEmpty()) {
-                    Toast.makeText(this, "축하합니다 ! 이제 언제 어디서나 당신의 일정을 한눈에 확인하실 수 있습니다!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "회원가입이 완료되었습니다. 로그인해주세요!", Toast.LENGTH_LONG).show()
 
-                    // SharedPreferences에 아이디 저장
+                    // SharedPreferences에 아이디 저장 (로그인 화면에서 자동 완성을 위해)
                     val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
                     with(sharedPref.edit()) {
                         putString("userId", SchoolId)
                         apply()
                     }
-                    startActivity(Intent(this, MainActivity::class.java))
+
+                    // 로그인 화면으로 이동
+                    startActivity(Intent(this, LoginActivity::class.java))
                     finish()
 
                 } else {
