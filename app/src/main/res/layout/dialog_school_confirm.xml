@@ -26,6 +26,7 @@
             android:id="@+id/btnCancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="#0047AB"
             android:text="취소" />
 
         <Space
@@ -36,6 +37,7 @@
             android:id="@+id/btnConfirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="#0047AB"
             android:text="확인" />
     </LinearLayout>
 </LinearLayout>
