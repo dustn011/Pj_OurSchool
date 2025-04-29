@@ -41,6 +41,61 @@
 
     <!-- 가운데 ui 만드는 곳 -->
 
+    <ScrollView
+        android:id="@+id/shuttle_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottom_menu"
+        android:layout_below="@id/header"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_bus"/>
+
+            <TextView
+                android:text="청주대학교 셔틀버스 안내"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:text="셔틀버스 시간표 및 노선 정보는 학교 공식 홈페이지를 통해 확인할 수 있습니다."
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#555555"
+                android:gravity="center"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btn_shuttle_link"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="셔틀버스 페이지 열기"
+                android:textAllCaps="false"
+                android:backgroundTint="#3557C8"
+                android:textColor="#FFFFFF"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:padding="12dp"
+                android:paddingBottom="12dp"
+                android:layout_marginTop="12dp"/>
+
+        </LinearLayout>
+    </ScrollView>
 
 
 
