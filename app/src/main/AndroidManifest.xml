@@ -24,13 +24,14 @@
         android:theme="@style/Theme.Pj_OurSchool"
         tools:targetApi="31">
         <activity
-            android:name=".LoginActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".LoginActivity" android:label="Login"/>
         <activity android:name=".Time" android:label="Time"/>
         <activity android:name=".Campus" android:label="Campus"/>
         <activity android:name=".ShuttleBus" android:label="ShuttleBus"/>
@@ -38,6 +39,7 @@
         <activity android:name=".Profile" android:label="Profile"/>
         <activity android:name=".SignupInfoActivity" />
         <activity android:name=".MainActivity" android:label="Main"/>
+
 
 
     </application>

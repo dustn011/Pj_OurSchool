@@ -1,0 +1,27 @@
+package com.example.pj_ourschool
+
+import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
+import androidx.appcompat.app.AppCompatActivity
+
+class SplashActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_splash)
+
+        Handler().postDelayed({
+            // 스플래시 화면이 끝난 후 로그인 액티비티로 전환
+            val loginIntent = Intent(
+                this@SplashActivity,
+                LoginActivity::class.java
+            )
+            startActivity(loginIntent)
+            finish() // 현재 액티비티 종료
+        }, SPLASH_DISPLAY_TIME.toLong())
+    }
+
+    companion object {
+        private const val SPLASH_DISPLAY_TIME = 2000 // 2초
+    }
+}
