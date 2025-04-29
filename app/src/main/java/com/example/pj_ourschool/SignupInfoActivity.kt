@@ -94,7 +94,7 @@ class   SignupInfoActivity : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 val connection = MSSQLConnector.getConnection()
-                var isVerified = false
+                var verificationResult: String = "" // 인증 결과 메시지를 저장할 변수
 
                 if (connection != null) {
                     val statement = connection.createStatement()
@@ -106,23 +106,37 @@ class   SignupInfoActivity : AppCompatActivity() {
                     val resultSet = preparedStatement.executeQuery()
 
                     if (resultSet.next()) {
-                        val insertQuery = "INSERT INTO admin_info VALUES (?, ?)"
-                        val insertStmt = connection.prepareStatement(insertQuery)
-                        insertStmt.setString(1, id)
-                        insertStmt.setString(2, pw)
-                        insertStmt.executeUpdate()
-                        isVerified = true
+                        // 이미 admin_info에 존재하는지 확인
+                        val checkAdminQuery = "SELECT admin_id FROM admin_info WHERE admin_id = ?"
+                        val checkAdminStmt = connection.prepareStatement(checkAdminQuery)
+                        checkAdminStmt.setString(1, id)
+                        val adminResultSet = checkAdminStmt.executeQuery()
+
+                        if (adminResultSet.next()) {
+                            verificationResult = "이미 가입한 회원입니다."
+                        } else {
+                            val insertQuery = "INSERT INTO admin_info VALUES (?, ?)"
+                            val insertStmt = connection.prepareStatement(insertQuery)
+                            insertStmt.setString(1, id)
+                            insertStmt.setString(2, pw)
+                            insertStmt.executeUpdate()
+                            verificationResult = "인증되었습니다!"
+                        }
+                        adminResultSet.close()
+                        checkAdminStmt.close()
                     } else {
-                        isVerified = false
+                        verificationResult = "ID/PW 오류입니다. 다시 한 번 입력해주세요."
                     }
 
+                    preparedStatement.close()
+                    statement.close()
+                    connection.close()
+
                     withContext(Dispatchers.Main) {
-                        isSchoolVerified = isVerified // 인증 결과 업데이트
-                        showVerificationDialog(isVerified)
+                        isSchoolVerified = (verificationResult == "인증되었습니다!") // 인증 성공 여부 업데이트
+                        showVerificationDialog(verificationResult)
                         updateSignupButtonState() // 인증 결과에 따라 회원가입 버튼 상태 업데이트
-                        if (!isVerified) {
-                            Toast.makeText(this@SignupInfoActivity, "학교 인증에 실패했습니다. 인증 후 회원가입을 진행해주세요.", Toast.LENGTH_LONG).show()
-                        }
+                        // Toast.makeText(this@SignupInfoActivity, "학교 인증에 실패했습니다. 인증 후 회원가입을 진행해주세요.", Toast.LENGTH_LONG).show()
                     }
 
                 } else {
@@ -197,7 +211,7 @@ class   SignupInfoActivity : AppCompatActivity() {
     }
 
     // 인증 결과 팝업
-    private fun showVerificationDialog(success: Boolean) {
+    private fun showVerificationDialog(message: String) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_verifydialog, null)
         val dialogBuilder = AlertDialog.Builder(this).setView(dialogView)
         val alertDialog = dialogBuilder.create()
@@ -205,11 +219,7 @@ class   SignupInfoActivity : AppCompatActivity() {
         val txtMessage = dialogView.findViewById<TextView>(R.id.txtDialogMessage)
         val btnConfirm = dialogView.findViewById<Button>(R.id.btnDialogConfirm)
 
-        txtMessage.text = if (success) {
-            "인증되었습니다!"
-        } else {
-            "ID/PW 오류입니다. 다시 한 번 입력해주세요."
-        }
+        txtMessage.text = message
 
         btnConfirm.setOnClickListener {
             alertDialog.dismiss()
