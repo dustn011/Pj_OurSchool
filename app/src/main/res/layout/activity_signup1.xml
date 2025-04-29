@@ -58,14 +58,17 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="12dp">
+            android:paddingHorizontal="12dp"
+            android:background="@color/white">
 
             <EditText
                 android:id="@+id/editSchool"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:hint="학교명을 입력하세요"
-                android:background="@android:color/transparent"
+                android:textColorHint="#808080"
+                android:textColor="#000000"
+                android:background="@android:color/white"
                 android:textSize="14sp"
                 android:paddingEnd="40dp"
                 android:inputType="text" />

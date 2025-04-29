@@ -7,6 +7,7 @@ import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -28,25 +29,9 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import java.sql.Connection
 import java.sql.DriverManager
-
-// Backend 필수 코드. KYS
-object MSSQLConnector {
-    private const val URL = "jdbc:jtds:sqlserver://112.72.143.143:1433;databaseName=DB"
-    private const val USER = "엉구"
-    private const val PASSWORD = "1234"
-
-    suspend fun getConnection(): Connection? {
-        return withContext(Dispatchers.IO) {
-            try {
-                Class.forName("net.sourceforge.jtds.jdbc.Driver")
-                DriverManager.getConnection(URL, USER, PASSWORD)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
-}
+import com.example.pj_ourschool.MSSQLConnector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
@@ -65,9 +50,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var plusScreen1TextView: TextView // 추가
     private lateinit var weatherImageView: ImageView // 수정됨 (아이콘 추가)
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
 
         timeImageView = findViewById(R.id.time)
         campusImageView = findViewById(R.id.campus)
@@ -80,6 +68,9 @@ class MainActivity : AppCompatActivity() {
 
         weatherImageView = findViewById(R.id.weatherImageView) // 수정됨 (아이콘 연결)
         plusScreen1TextView = findViewById(R.id.plusScreen1TextView)
+
+
+
 
 
 
@@ -126,8 +117,12 @@ class MainActivity : AppCompatActivity() {
             // Permission already granted
             getCurrentLocationAndFetchWeather()
         }
+        // MainActivity 시작 시 데이터베이스에서 정보 가져오기 (예시)
+
 
     }
+
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
@@ -226,11 +221,11 @@ class MainActivity : AppCompatActivity() {
             "moderate rain" -> "비"
             "drizzle" -> "가벼운 비"
             "light rain" -> "가벼운 비"
+            "light intensity drizzle" -> "가벼운 비"
             "rain" -> "비"
             "thunderstorm" -> "천둥번개"
             "snow" -> "눈"
             "mist" -> "안개"
-            "light intensity drizzle" -> "가벼운 비"
             else -> english // 번역 없으면 그대로 표시
         }
     }

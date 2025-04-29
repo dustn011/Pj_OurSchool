@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.pj_ourschool.MSSQLConnector
 import kotlinx.coroutines.*
 
-class SignupInfoActivity : AppCompatActivity() {
+class   SignupInfoActivity : AppCompatActivity() {
 
     private lateinit var editSchoolId: EditText
     private lateinit var editPassword: EditText
