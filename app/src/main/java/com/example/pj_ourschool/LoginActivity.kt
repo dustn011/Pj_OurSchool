@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.pj_ourschool.databinding.ActivityLoginBinding
+import com.example.pj_ourschool.util.SignupActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,7 +112,7 @@ class LoginActivity : AppCompatActivity() {
         // 회원가입 클릭
         binding.tvRegister.setOnClickListener {
             Toast.makeText(this, "회원가입 화면으로 이동합니다.", Toast.LENGTH_SHORT).show()
-            startActivity(Intent(this, SignupInfoActivity::class.java))
+            startActivity(Intent(this, SignupActivity::class.java))
         }
 
         // 아이디/비밀번호 찾기 클릭

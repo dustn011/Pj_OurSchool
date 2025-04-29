@@ -59,7 +59,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="8dp"
         android:background="#FFFFFF">
 
         <LinearLayout
