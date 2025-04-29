@@ -70,6 +70,11 @@ class LoginActivity : AppCompatActivity() {
                             withContext(Dispatchers.Main) {
                                 Log.d("LoginActivity", "userId: $userId, password: $password, userExists: $userExists, passwordCorrect: $passwordCorrect")
                                 if (passwordCorrect) {
+                                    // **로그인 성공 시 SharedPreferences에 아이디 저장**
+                                    val editor = sharedPref.edit()
+                                    editor.putString("userId", userId)
+                                    editor.apply() // 또는 editor.commit()
+
                                     Toast.makeText(this@LoginActivity, "${userId}님, 환영합니다!", Toast.LENGTH_SHORT).show()
                                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                                     finish()
