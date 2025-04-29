@@ -708,8 +708,8 @@
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/home"
-                android:background="#3557C8"/>
+                android:background="#3557C8"
+                android:src="@drawable/home" />
 
             <TextView
                 android:layout_width="wrap_content"
