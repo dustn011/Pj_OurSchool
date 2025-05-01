@@ -222,6 +222,7 @@ class MainActivity : AppCompatActivity() {
             "drizzle" -> "가벼운 비"
             "light rain" -> "가벼운 비"
             "light intensity drizzle" -> "가벼운 비"
+            "heavy intensity rain" -> "강한 비"
             "rain" -> "비"
             "thunderstorm" -> "천둥번개"
             "snow" -> "눈"
@@ -234,7 +235,7 @@ class MainActivity : AppCompatActivity() {
             "clear sky" -> R.drawable.ic_sun  // 맑음
             "few clouds", "scattered clouds" -> R.drawable.ic_cloud_sun  // 구름 조금
             "broken clouds", "overcast clouds" -> R.drawable.ic_cloud  // 흐림
-            "shower rain", "rain", "moderate rain", "light rain", "light intensity drizzle", "drizzle" -> R.drawable.ic_rain  // 비
+            "shower rain", "rain", "moderate rain", "light rain", "light intensity drizzle", "drizzle", "heavy intensity rain" -> R.drawable.ic_rain  // 비
             "thunderstorm" -> R.drawable.ic_thunder  // 천둥번개
             "snow" -> R.drawable.ic_snow  // 눈
             "mist" -> R.drawable.ic_fog  // 안개

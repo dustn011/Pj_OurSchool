@@ -52,7 +52,7 @@ class Campus : AppCompatActivity() {
     private lateinit var locationCallback: LocationCallback
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
     // 자신의 카카오 지도api rest키 써야합니다-----------------------
-    private val REST_API_KEY = "1613f8846a010336dad9a71f5e7a6879"
+    private val REST_API_KEY = "2cb1433a2459d08c0fb7c0351fddd03d"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +62,7 @@ class Campus : AppCompatActivity() {
         val keyHash = Utility.getKeyHash(this)
         Log.d("Hash", keyHash)
 
-        KakaoMapSdk.init(this, "b7aee3bec4f05eacaa418b39bd0a1f13")
+        KakaoMapSdk.init(this, "8657f921e8595e3efa4a2e0663545bbe")
 
         mapView = bindingCampus.mapView
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)

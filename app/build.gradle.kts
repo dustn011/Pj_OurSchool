@@ -23,7 +23,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "KAKAO_MAP_KEY", "\"b7aee3bec4f05eacaa418b39bd0a1f13\"")
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"8657f921e8595e3efa4a2e0663545bbe\"")
     }
     buildFeatures {
         viewBinding = true
