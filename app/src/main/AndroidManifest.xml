@@ -24,7 +24,7 @@
         android:theme="@style/Theme.Pj_OurSchool"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,6 +38,7 @@
         <activity android:name=".Chat" android:label="Chat"/>
         <activity android:name=".Profile" android:label="Profile"/>
         <activity android:name=".SignupInfoActivity" />
+        <activity android:name=".MainActivity" android:label="Main"/>
         <!-- <activity android:name=".MainActivity" android:label="Main"/> -->
         <activity android:name=".util.SignupActivity" android:label="sign"/>
 

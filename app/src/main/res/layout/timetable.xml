@@ -802,7 +802,6 @@
                 android:textSize="22sp" />
         </LinearLayout>
 
-    </LinearLayout>v
-
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
