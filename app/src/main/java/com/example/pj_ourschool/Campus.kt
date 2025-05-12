@@ -100,6 +100,9 @@ class Campus : AppCompatActivity() {
                     )
                 }
 
+                // 건물 마커 추가
+                addBuildingMarkers()
+
                 kakaoMap?.setOnMapClickListener { _, position, _, _ ->
                     addMarker(position)
                 }
@@ -182,8 +185,50 @@ class Campus : AppCompatActivity() {
             currentMarker = it.addLabel(labelOptions)
         }
     }
+    private fun addBuildingMarkers() {
+        val buildings = listOf(
+            Triple("청석교육역사관", 36.652875779969825, 127.49349670472847),
+            Triple("대학원", 36.65219099348803, 127.4940235571869),
+            Triple("입학취업지원관", 36.6516933387964, 127.49342764963501),
+            Triple("박물관", 36.65112059087767, 127.49626739340559),
+            Triple("청석관", 36.650882110049835, 127.49510837724529),
+            Triple("융합관", 36.651623356261105, 127.49563315757024),
+            Triple("공과대학(구관)", 36.65269020356402, 127.49695128375961),
+            Triple("보건의료과학대학", 36.65103672934571, 127.49692947528708),
+            Triple("경상대학", 36.649549188593156, 127.4970932577944),
+            Triple("교수연구동", 36.64888725216073, 127.49699953825224),
+            Triple("중앙도서관", 36.652183679932016, 127.49470011990678),
+            Triple("육군학군단", 36.6556945485927, 127.49878521712864),
+            Triple("종합강의동", 36.6483053045581, 127.49663234917526),
+            Triple("공과대학 신관", 36.65212103959428, 127.49729991021296),
+            Triple("CJU학생지원관", 36.65170099203153, 127.4926672165252324),
+            Triple("금융센터", 36.65143737571066, 127.49376431798153),
+            Triple("인문사회사범대학", 36.650013778066885, 127.49643083678156),
+            Triple("PoE관", 36.65162935191857, 127.4931029185012),
+            Triple("예술대학(구관)", 36.65974216993851, 127.50002207488309),
+            Triple("예술대학(신관)", 36.66059040788177, 127.50081329601157),
+            Triple("공예관", 36.65781189046739, 127.50046815334458),
+            Triple("공군학군단", 36.65856286659573, 127.50028008093844),
+            Triple("예지관", 36.659725255030935, 127.49706640429429),
+            Triple("충의관", 36.65537712687875, 127.49819320900963),
+            Triple("새천년종합정보관", 36.653159876558725, 127.49506704121313)
+        )
 
-    // 역지오코딩
+        val style = LabelStyle.from(R.drawable.map_icon)
+
+        labelLayer?.let { layer ->
+            for ((name, lat, lng) in buildings) {
+                layer.addLabel(
+                    LabelOptions.from(LatLng.from(lat, lng))
+                        .setStyles(style)
+                        .setTag(name)
+                )
+            }
+        }
+    }
+
+
+        // 역지오코딩
     private fun getAddressFromLatLng(lat: Double, lng: Double, callback: (String) -> Unit) {
         val client = OkHttpClient()
         val url = "https://dapi.kakao.com/v2/local/geo/coord2address.json?x=$lng&y=$lat"
