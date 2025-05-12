@@ -5,15 +5,19 @@
     android:layout_height="match_parent"
     android:background="#E8EAF6">
 
+
+
     <!-- 상단 헤더 -->
     <LinearLayout
+
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="24dp"
         android:gravity="center_vertical"
         android:background="#3557C8">
+
 
         <ImageView
             android:id="@+id/left_arrow"
@@ -81,6 +85,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="홈"
+                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -103,6 +108,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="시간표"
+                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -125,6 +131,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="셔틀버스"
+                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -147,7 +154,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="채팅"
+                android:textColor="@android:color/black"
                 android:textSize="22sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:background="@android:color/transparent"/>
         </LinearLayout>
 
     </LinearLayout>
