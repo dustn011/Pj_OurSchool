@@ -49,6 +49,9 @@ dependencies {
 
     implementation("com.kakao.maps.open:android:2.12.13")
     implementation ("com.kakao.sdk:v2-user:2.21.1")
+    
+    // 새로 추가
+    implementation("com.kakao.sdk:v2-all:2.21.2")
 
 
 

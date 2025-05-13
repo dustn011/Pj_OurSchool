@@ -12,10 +12,12 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import com.example.pj_ourschool.databinding.ActivityCampusBinding
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMap
@@ -49,10 +51,9 @@ class Campus : AppCompatActivity() {
     private var currentLocationMarker: Label? = null
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
     private val LOCATION_PERMISSION_REQUEST_CODE = 1000
-    // 자신의 카카오 지도api rest키 써야합니다-----------------------
-    private val REST_API_KEY = "2cb1433a2459d08c0fb7c0351fddd03d"
+    private val REST_API_KEY = "2cb1433a2459d08c0fb7c0351fddd03d" // 여기에 실제 REST API 키를 넣어주세요.
+    private var currentLocationForNavigation: Location? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +63,7 @@ class Campus : AppCompatActivity() {
         val keyHash = Utility.getKeyHash(this)
         Log.d("Hash", keyHash)
 
-        KakaoMapSdk.init(this, "8657f921e8595e3efa4a2e0663545bbe")
+        KakaoMapSdk.init(this, "8657f921e8595e3efa4a2e0663545bbe") // 여기에 실제 앱 키를 넣어주세요.
 
         mapView = bindingCampus.mapView
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -91,7 +92,8 @@ class Campus : AppCompatActivity() {
                 if (ContextCompat.checkSelfPermission(this@Campus, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED
                 ) {
-                    getCurrentLocation()
+                    getCurrentLocationForNavigation() // 내비 출발지 설정을 위한 현재 위치 가져오기
+                    getCurrentLocation() // 현재 위치 마커 표시
                 } else {
                     ActivityCompat.requestPermissions(
                         this@Campus,
@@ -103,22 +105,54 @@ class Campus : AppCompatActivity() {
                 // 건물 마커 추가
                 addBuildingMarkers()
 
+                // ✅ 마커 추가 기능 제거
+                /*
                 kakaoMap?.setOnMapClickListener { _, position, _, _ ->
                     addMarker(position)
                 }
+                */
 
-                // 마커 클릭 이벤트
+                // 마커 클릭 리스너에서 호출하는 부분도 수정해야 합니다.
                 kakaoMap?.setOnLabelClickListener { _, _, label ->
-                    val lat = label.position.latitude
-                    val lng = label.position.longitude
+                    val clickedBuilding = buildings.find { it.second == label.tag?.toString() }
+                    if (clickedBuilding != null) {
+                        // 건물 정보 UI를 보이도록 설정
+                        bindingCampus.buildingInfoLayout.visibility = View.VISIBLE
 
-                    getAddressFromLatLng(lat, lng) { address ->
-                        Toast.makeText(this@Campus, "주소: $address", Toast.LENGTH_SHORT).show()
+                        // 건물 이름 UI에 표시
+                        bindingCampus.buildingNameTextView.text = clickedBuilding.second
+
+                        // 건물 번호를 이용하여 이미지 리소스 이름 생성
+                        val imageName = "cju${clickedBuilding.first}"
+                        val imageResource = resources.getIdentifier(imageName, "drawable", packageName)
+
+                        // 이미지 리소스가 존재하면 ImageView에 로드, 없으면 기본 이미지 표시 (선택 사항)
+                        if (imageResource != 0) {
+                            bindingCampus.buildingImageView.setImageResource(imageResource)
+                        } else {
+                            bindingCampus.buildingImageView.setImageResource(R.drawable.ic_launcher_background) // 기본 이미지
+                            Log.e("Campus", "Image resource not found: $imageName")
+                        }
+
+                        // "카카오맵으로 이동" 버튼 클릭 리스너 설정 (클릭할 때마다 새로 설정하지 않도록 주의)
+                        bindingCampus.navigateToKakaoMapButton.setOnClickListener {
+                            val destinationLat = clickedBuilding.third
+                            val destinationLng = clickedBuilding.fourth
+                            openKakaoMapNavigation(destinationLat, destinationLng)
+                            bindingCampus.buildingInfoLayout.visibility = View.GONE // 이동 후 UI 숨기기 (선택 사항)
+                        }
+                    } else {
+                        // 클릭된 마커에 해당하는 건물을 찾지 못한 경우 처리 (선택 사항)
+                        bindingCampus.buildingInfoLayout.visibility = View.GONE
                     }
                     false
                 }
-            }
+                // 닫기 버튼 클릭 리스너 추가
+                bindingCampus.closeButton.setOnClickListener {
+                    bindingCampus.buildingInfoLayout.visibility = View.GONE
+                }
 
+            }
         })
 
         profileImageView.setOnClickListener { startActivity(Intent(this, Profile::class.java)) }
@@ -139,7 +173,6 @@ class Campus : AppCompatActivity() {
                         val currentLatLng = LatLng.from(it.latitude, it.longitude)
                         addCurrentLocationMarker(currentLatLng)
 
-                        // 줌 레벨을 17.0f로 설정하여 현재 위치로 카메라 이동
                         val cameraUpdate = CameraUpdateFactory.newCenterPosition(currentLatLng, 19)
                         kakaoMap?.moveCamera(cameraUpdate)
                     } ?: run {
@@ -152,15 +185,14 @@ class Campus : AppCompatActivity() {
         } else {
             Toast.makeText(this, "위치 권한이 없습니다.", Toast.LENGTH_SHORT).show()
         }
-
     }
-
 
     private fun addCurrentLocationMarker(position: LatLng) {
         labelLayer?.let {
             currentLocationMarker?.remove()
 
-            val markerStyle = LabelStyle.from(R.drawable.map_icon)
+            // ✅ 내 위치 마커에만 다른 아이콘 적용
+            val markerStyle = LabelStyle.from(R.drawable.map_icon_selected)
                 .setAnchorPoint(0.5f, 1.0f)
 
             val labelOptions = LabelOptions.from(position)
@@ -185,57 +217,28 @@ class Campus : AppCompatActivity() {
             currentMarker = it.addLabel(labelOptions)
         }
     }
-    private fun addBuildingMarkers() {
-        val buildings = listOf(
-            Triple("청석교육역사관", 36.652875779969825, 127.49349670472847),
-            Triple("대학원", 36.65219099348803, 127.4940235571869),
-            Triple("입학취업지원관", 36.6516933387964, 127.49342764963501),
-            Triple("박물관", 36.65112059087767, 127.49626739340559),
-            Triple("청석관", 36.650882110049835, 127.49510837724529),
-            Triple("융합관", 36.651623356261105, 127.49563315757024),
-            Triple("공과대학(구관)", 36.65269020356402, 127.49695128375961),
-            Triple("보건의료과학대학", 36.65103672934571, 127.49692947528708),
-            Triple("경상대학", 36.649549188593156, 127.4970932577944),
-            Triple("교수연구동", 36.64888725216073, 127.49699953825224),
-            Triple("중앙도서관", 36.652183679932016, 127.49470011990678),
-            Triple("육군학군단", 36.6556945485927, 127.49878521712864),
-            Triple("종합강의동", 36.6483053045581, 127.49663234917526),
-            Triple("공과대학 신관", 36.65212103959428, 127.49729991021296),
-            Triple("CJU학생지원관", 36.65170099203153, 127.4926672165252324),
-            Triple("금융센터", 36.65143737571066, 127.49376431798153),
-            Triple("인문사회사범대학", 36.650013778066885, 127.49643083678156),
-            Triple("PoE관", 36.65162935191857, 127.4931029185012),
-            Triple("예술대학(구관)", 36.65974216993851, 127.50002207488309),
-            Triple("예술대학(신관)", 36.66059040788177, 127.50081329601157),
-            Triple("공예관", 36.65781189046739, 127.50046815334458),
-            Triple("공군학군단", 36.65856286659573, 127.50028008093844),
-            Triple("예지관", 36.659725255030935, 127.49706640429429),
-            Triple("충의관", 36.65537712687875, 127.49819320900963),
-            Triple("새천년종합정보관", 36.653159876558725, 127.49506704121313)
-        )
 
-        val style = LabelStyle.from(R.drawable.map_icon)
+    private fun addBuildingMarkers() {
+        val style = LabelStyle.from(R.drawable.map_icon) // 건물 마커 아이콘 (선택 사항)
 
         labelLayer?.let { layer ->
-            for ((name, lat, lng) in buildings) {
+            for ((number, name, lat, lng) in buildings) {
                 layer.addLabel(
                     LabelOptions.from(LatLng.from(lat, lng))
                         .setStyles(style)
-                        .setTag(name)
+                        .setTag(name) // Tag는 건물 이름으로 유지 (필요에 따라 번호로 변경 가능)
                 )
             }
         }
     }
 
-
-        // 역지오코딩
     private fun getAddressFromLatLng(lat: Double, lng: Double, callback: (String) -> Unit) {
         val client = OkHttpClient()
         val url = "https://dapi.kakao.com/v2/local/geo/coord2address.json?x=$lng&y=$lat"
 
         val request = Request.Builder()
             .url(url)
-            .addHeader("Authorization", "KakaoAK $REST_API_KEY") // REST API 키 필요
+            .addHeader("Authorization", "KakaoAK $REST_API_KEY")
             .build()
 
         client.newCall(request).enqueue(object : Callback {
@@ -253,11 +256,7 @@ class Campus : AppCompatActivity() {
                             .getString("address_name")
 
                         runOnUiThread {
-                            callback(address)
-                        }
-                    } else {
-                        runOnUiThread {
-                            callback("주소 정보 없음")
+                            // callback(address) // 기존 토스트 메시지를 표시하던 부분 삭제
                         }
                     }
                 }
@@ -265,11 +264,16 @@ class Campus : AppCompatActivity() {
         })
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    getCurrentLocationForNavigation()
                     getCurrentLocation()
                 } else {
                     Toast.makeText(this, "위치 정보 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
@@ -281,4 +285,96 @@ class Campus : AppCompatActivity() {
             }
         }
     }
+
+
+    private fun getCurrentLocationForNavigation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    location?.let {
+                        currentLocationForNavigation = it
+                    } ?: run {
+                        Toast.makeText(
+                            this,
+                            "현재 위치를 가져올 수 없습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+                .addOnFailureListener {
+                    Toast.makeText(
+                        this,
+                        "위치 정보 요청 실패: ${it.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+        } else {
+            Toast.makeText(this, "위치 권한이 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openKakaoMapNavigation(destLat: Double, destLng: Double) {
+        currentLocationForNavigation?.let { startLocation ->
+            val startLat = startLocation.latitude
+            val startLng = startLocation.longitude
+            val uri = Uri.parse("https://map.kakao.com/link/search/$destLat,$destLng") // 도착지 좌표 검색 후 길찾기 유도
+
+            Log.d("NavigationUri", "생성된 URI: $uri")
+
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+
+            val isKakaoMapCallable = resolveInfo != null
+            Log.d("KakaoMapCallable", "카카오맵 호출 가능: $isKakaoMapCallable")
+
+            if (isKakaoMapCallable) {
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "카카오맵 앱을 설치해주세요.", Toast.LENGTH_SHORT).show()
+                //val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=net.daum.android.map"))
+                //startActivity(marketIntent)
+            }
+        } ?: run {
+            Toast.makeText(this, "현재 위치를 가져올 수 없어 길찾기를 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // 건물 정보 리스트 (건물 번호 추가)
+    private val buildings = listOf(
+        Quadruple("01", "청석교육역사관", 36.652875779969825, 127.49349670472847),
+        Quadruple("02", "대학원", 36.65219099348803, 127.4940235571869),
+        Quadruple("03", "입학취업지원관", 36.6516933387964, 127.49342764963501),
+        Quadruple("04", "박물관", 36.65112059087767, 127.49626739340559),
+        Quadruple("05", "청석관", 36.650882110049835, 127.49510837724529),
+        Quadruple("06", "융합관", 36.651623356261105, 127.49563315757024),
+        Quadruple("07", "공과대학(구관)", 36.65269020356402, 127.49695128375961),
+        Quadruple("08", "보건의료과학대학", 36.65103672934571, 127.49692947528708),
+        Quadruple("09", "경상대학", 36.649549188593156, 127.4970932577944),
+        Quadruple("10", "교수연구동", 36.64888725216073, 127.49699953825224),
+        Quadruple("11", "중앙도서관", 36.652183679932016, 127.49470011990678),
+        Quadruple("12", "육군학군단", 36.6556945485927, 127.49878521712864),
+        Quadruple("13", "종합강의동", 36.6483053045581, 127.49663234917526),
+        Quadruple("14", "공과대학 신관", 36.65212103959428, 127.49729991021296),
+        Quadruple("16", "CJU학생지원관", 36.65170099203153, 127.4926672165252324),
+        Quadruple("18", "금융센터", 36.65143737571066, 127.49376431798153),
+        Quadruple("20", "인문사회사범대학", 36.650013778066885, 127.49643083678156),
+        Quadruple("23", "PoE관", 36.65162935191857, 127.4931029185012),
+        Quadruple("26", "예술대학(구관)", 36.65974216993851, 127.50002207488309),
+        Quadruple("31", "예술대학(신관)", 36.66059040788177, 127.50081329601157),
+        Quadruple("32", "공예관", 36.65781189046739, 127.50046815334458),
+        Quadruple("35", "공군학군단", 36.65856286659573, 127.50028008093844),
+        Quadruple("36", "예지관", 36.659725255030935, 127.49706640429429),
+        Quadruple("39", "충의관", 36.65537712687875, 127.49819320900963),
+        Quadruple("42", "새천년종합정보관", 36.653159876558725, 127.49506704121313)
+    )
+
+    // Triple 대신 사용할 데이터 클래스 정의
+    data class Quadruple<out A, out B, out C, out D>(
+        val first: A,
+        val second: B,
+        val third: C,
+        val fourth: D
+    )
 }

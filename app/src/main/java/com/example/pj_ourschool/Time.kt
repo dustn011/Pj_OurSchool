@@ -100,61 +100,115 @@ class Time : AppCompatActivity() {
             startActivity(intent)
         }
     }
-
+    /* //실제 db연동하는 코드
     private fun loadTimetableData() {
         lifecycleScope.launch {
             val timetableData = fetchTimetableDataFromMSSQL()
             updateTimetableUI(timetableData)
         }
-    }
+    } */
 
-    private suspend fun fetchTimetableDataFromMSSQL(): List<Map<String, Any>> = withContext(Dispatchers.IO) {
-        val resultList = mutableListOf<Map<String, Any>>()
-        val connection = MSSQLConnector.getConnection()
-        val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
-        val userId = sharedPref.getString("userId", "")
+    private fun loadTimetableData() {
+        // DB 연결 없이 테스트할 때는 아래 주석을 풀고 실제 DB 연결 코드는 주석 처리하세요.
+        val sampleData = getSampleTimetableData()
+        updateTimetableUI(sampleData)
 
-        try {
-            if (connection != null) {
-                val query = """
-                SELECT
-                    ci.class_name,
-                    ci.classroom,
-                    ci.class_schedule
-                FROM student_schedule AS ss
-                JOIN class_info AS ci
-                  ON ss.class_code = ci.class_code
-                 AND ss.class_section = ci.class_section
-                WHERE ss.student_id = '${userId}';
-            """.trimIndent()
-                val statement = connection.createStatement()
-                val resultSet: ResultSet = statement.executeQuery(query)
 
-                val metaData = resultSet.metaData
-                val columnCount = metaData.columnCount
-
-                while (resultSet.next()) {
-                    val rowData = mutableMapOf<String, Any>()
-                    for (i in 1..columnCount) {
-                        val columnName = metaData.getColumnName(i)
-                        val columnValue = resultSet.getString(i) ?: ""  // null일 경우 빈 문자열로 처리
-                        rowData[columnName] = columnValue
-                    }
-                    resultList.add(rowData)
-                }
-                resultSet.close()
-                statement.close()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            connection?.close()
+        lifecycleScope.launch {
+            val timetableData = fetchTimetableDataFromMSSQL()
+            updateTimetableUI(timetableData)
         }
-        resultList
+
     }
 
+    private fun getSampleTimetableData(): List<Map<String, String?>> {
+        return listOf(
+            mapOf(
+                "class_name" to "프로그래밍 기초",
+                "classroom" to "IT관 301",
+                "class_schedule" to "월(1,2),수(3)"
+            ),
+            mapOf(
+                "class_name" to "데이터베이스 개론",
+                "classroom" to "도서관 2층",
+                "class_schedule" to "화(4,5),목(4)"
+            ),
+            mapOf(
+                "class_name" to "운영체제",
+                "classroom" to "06-404 기초이론 실습실",
+                "class_schedule" to "금(1)"
+            ),
+            mapOf(
+                "class_name" to "자료구조",
+                "classroom" to "IT관 302",
+                "class_schedule" to "월(5,6)"
+            ),
+            mapOf(
+                "class_name" to "컴퓨터 네트워크",
+                "classroom" to "정보과학관",
+                "class_schedule" to "수(1,2)"
+            ),
+            mapOf(
+                "class_name" to "사이버 강의 1",
+                "classroom" to "",
+                "class_schedule" to ""
+            ),
+            mapOf(
+                "class_name" to "사이버 강의 2",
+                "classroom" to null,
+                "class_schedule" to null
+            )
+        )
+    }
 
-    private fun updateTimetableUI(results: List<Map<String, Any>>) {
+    private suspend fun fetchTimetableDataFromMSSQL(): List<Map<String, String?>> =
+        withContext(Dispatchers.IO) {
+            val resultList = mutableListOf<Map<String, String?>>() // 여기를 수정
+            val connection = MSSQLConnector.getConnection()
+            val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
+            val userId = sharedPref.getString("userId", "")
+
+            try {
+                if (connection != null) {
+                    val query = """
+            SELECT
+                ci.class_name,
+                ci.classroom,
+                ci.class_schedule
+            FROM student_schedule AS ss
+            JOIN class_info AS ci
+              ON ss.class_code = ci.class_code
+             AND ss.class_section = ci.class_section
+            WHERE ss.student_id = '${userId}';
+        """.trimIndent()
+                    val statement = connection.createStatement()
+                    val resultSet: ResultSet = statement.executeQuery(query)
+
+                    val metaData = resultSet.metaData
+                    val columnCount = metaData.columnCount
+
+                    while (resultSet.next()) {
+                        val rowData = mutableMapOf<String, String?>() // 여기를 수정
+                        for (i in 1..columnCount) {
+                            val columnName = metaData.getColumnName(i)
+                            val columnValue = resultSet.getString(i)
+                            rowData[columnName] = columnValue
+                        }
+                        resultList.add(rowData)
+                    }
+                    resultSet.close()
+                    statement.close()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                connection?.close()
+            }
+            resultList
+        }
+
+
+    private fun updateTimetableUI(results: List<Map<String, String?>>) {
         val dayMap = mapOf("월" to 0, "화" to 1, "수" to 2, "목" to 3, "금" to 4)
         val scheduleEntryPattern = Regex("([월화수목금])\\(((\\d+)(,\\d+)*)\\)")
         val onlineClasses = mutableListOf<String>()
@@ -200,7 +254,13 @@ class Time : AppCompatActivity() {
                             val cell = cells[row][col]
                             cell.text = className
                             if (classroom.isNotEmpty()) {
-                                cell.text = "${className}\n(${classroom})"
+                                val parts = classroom.split(" ") // 공백을 기준으로 분리
+                                val formattedClassroom = if (parts.size >= 2) {
+                                    "${parts[0]}\n${parts.subList(1, parts.size).joinToString(" ")}"
+                                } else {
+                                    classroom
+                                }
+                                cell.text = "${className}\n${formattedClassroom}"
                             }
                             cell.setBackgroundColor(cellColor)
                             filledCells[row][col] = true
