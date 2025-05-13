@@ -230,7 +230,7 @@ class Time : AppCompatActivity() {
                             cell.setBackgroundColor(cellColor)
                             filledCells[row][col] = true
 
-                            // 다음 시간대가 있고, 연속된 수업이라면 다음 칸도 색칠
+                            // 다음 시간대가 있고, 연속된 수업이라면 다음 칸도 색칠함
                             if (i + 1 < times.size && times[i + 1] == time + 1 && row + 1 < 9 && !filledCells[row + 1][col]) {
                                 cells[row + 1][col].setBackgroundColor(cellColor)
                                 filledCells[row + 1][col] = true

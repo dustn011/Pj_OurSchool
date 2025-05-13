@@ -337,7 +337,7 @@ class Campus : AppCompatActivity() {
             val startLat = startLocation.latitude
             val startLng = startLocation.longitude
 
-            //카카오 맵 uri를 몰라서 웹으로 이동하는 uri를 썻습니다 혹시 쓴다면 여기를 바꾸세요
+            //카카오 맵 uri를 몰라서 웹으로 이동하는 uri를 썻습니다 혹시 쓴다면 여기를 바꾸세요.
             val uri = Uri.parse("https://map.kakao.com/link/search/$destLat,$destLng") // 도착지 좌표 검색 후 길찾기 유도
 
             Log.d("NavigationUri", "생성된 URI: $uri")
