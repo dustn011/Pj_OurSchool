@@ -69,6 +69,7 @@
                 android:layout_weight="1"
                 android:textSize="20sp"
                 android:textStyle="bold"
+                android:textColor="@color/black"
                 android:gravity="center_horizontal" />
 
             <ImageView

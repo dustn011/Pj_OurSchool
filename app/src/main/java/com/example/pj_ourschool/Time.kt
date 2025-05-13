@@ -66,11 +66,28 @@ class Time : AppCompatActivity() {
             }
         }
 
-        // 모든 셀 초기화
+        // 모든 셀 초기화 및 클릭 리스너 설정
         for (i in 0..8) {
             for (j in 0..4) {
-                cells[i][j].setTextColor(Color.BLACK)
-                cells[i][j].text = ""
+                val cell = cells[i][j]
+                cell.setTextColor(Color.BLACK)
+                cell.text = ""
+                cell.setOnClickListener { view ->
+                    val textView = view as TextView
+                    val cellText = textView.text.toString()
+                    val lines = cellText.split("\n")
+                    if (lines.size >= 2) {
+                        val classroomInfo = lines.drop(1).joinToString(" ")
+                        // "건물번호-호수,건물번호-호수" 형식에서 첫 번째 건물 번호 추출
+                        val buildingNumber = classroomInfo.split(",").firstOrNull()?.split("-")?.firstOrNull()?.trim()
+
+                        if (!buildingNumber.isNullOrEmpty()) {
+                            val intent = Intent(this, Campus::class.java)
+                            intent.putExtra("buildingNumber", buildingNumber) // 추출한 건물 번호 전달
+                            startActivity(intent)
+                        }
+                    }
+                }
             }
         }
 
@@ -100,66 +117,14 @@ class Time : AppCompatActivity() {
             startActivity(intent)
         }
     }
-    /* //실제 db연동하는 코드
+    //실제 db연동하는 코드
     private fun loadTimetableData() {
         lifecycleScope.launch {
             val timetableData = fetchTimetableDataFromMSSQL()
             updateTimetableUI(timetableData)
         }
-    } */
-
-    private fun loadTimetableData() {
-        // DB 연결 없이 테스트할 때는 아래 주석을 풀고 실제 DB 연결 코드는 주석 처리하세요.
-        val sampleData = getSampleTimetableData()
-        updateTimetableUI(sampleData)
-
-
-        lifecycleScope.launch {
-            val timetableData = fetchTimetableDataFromMSSQL()
-            updateTimetableUI(timetableData)
-        }
-
     }
 
-    private fun getSampleTimetableData(): List<Map<String, String?>> {
-        return listOf(
-            mapOf(
-                "class_name" to "프로그래밍 기초",
-                "classroom" to "IT관 301",
-                "class_schedule" to "월(1,2),수(3)"
-            ),
-            mapOf(
-                "class_name" to "데이터베이스 개론",
-                "classroom" to "도서관 2층",
-                "class_schedule" to "화(4,5),목(4)"
-            ),
-            mapOf(
-                "class_name" to "운영체제",
-                "classroom" to "06-404 기초이론 실습실",
-                "class_schedule" to "금(1)"
-            ),
-            mapOf(
-                "class_name" to "자료구조",
-                "classroom" to "IT관 302",
-                "class_schedule" to "월(5,6)"
-            ),
-            mapOf(
-                "class_name" to "컴퓨터 네트워크",
-                "classroom" to "정보과학관",
-                "class_schedule" to "수(1,2)"
-            ),
-            mapOf(
-                "class_name" to "사이버 강의 1",
-                "classroom" to "",
-                "class_schedule" to ""
-            ),
-            mapOf(
-                "class_name" to "사이버 강의 2",
-                "classroom" to null,
-                "class_schedule" to null
-            )
-        )
-    }
 
     private suspend fun fetchTimetableDataFromMSSQL(): List<Map<String, String?>> =
         withContext(Dispatchers.IO) {

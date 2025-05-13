@@ -93,7 +93,14 @@ class Campus : AppCompatActivity() {
                     == PackageManager.PERMISSION_GRANTED
                 ) {
                     getCurrentLocationForNavigation() // 내비 출발지 설정을 위한 현재 위치 가져오기
-                    getCurrentLocation() // 현재 위치 마커 표시
+                    // Time 액티비티에서 전달된 건물 번호 확인 및 처리 (현재 위치 가져오기 전에 처리)
+                    intent?.getStringExtra("buildingNumber")?.let { buildingNumber ->
+                        Log.d("Campus", "Time 액티비티로부터 받은 건물 번호: $buildingNumber")
+                        findAndMoveCameraToBuilding(buildingNumber)
+                    } ?: run {
+                        // 전달된 건물 번호가 없으면 현재 위치 표시
+                        getCurrentLocation()
+                    }
                 } else {
                     ActivityCompat.requestPermissions(
                         this@Campus,
@@ -112,37 +119,31 @@ class Campus : AppCompatActivity() {
                 }
                 */
 
-                // 마커 클릭 리스너에서 호출하는 부분도 수정해야 합니다.
+
+
                 kakaoMap?.setOnLabelClickListener { _, _, label ->
                     val clickedBuilding = buildings.find { it.second == label.tag?.toString() }
                     if (clickedBuilding != null) {
-                        // 건물 정보 UI를 보이도록 설정
                         bindingCampus.buildingInfoLayout.visibility = View.VISIBLE
-
-                        // 건물 이름 UI에 표시
                         bindingCampus.buildingNameTextView.text = clickedBuilding.second
 
-                        // 건물 번호를 이용하여 이미지 리소스 이름 생성
                         val imageName = "cju${clickedBuilding.first}"
                         val imageResource = resources.getIdentifier(imageName, "drawable", packageName)
 
-                        // 이미지 리소스가 존재하면 ImageView에 로드, 없으면 기본 이미지 표시 (선택 사항)
                         if (imageResource != 0) {
                             bindingCampus.buildingImageView.setImageResource(imageResource)
                         } else {
-                            bindingCampus.buildingImageView.setImageResource(R.drawable.ic_launcher_background) // 기본 이미지
+                            bindingCampus.buildingImageView.setImageResource(R.drawable.ic_launcher_background)
                             Log.e("Campus", "Image resource not found: $imageName")
                         }
 
-                        // "카카오맵으로 이동" 버튼 클릭 리스너 설정 (클릭할 때마다 새로 설정하지 않도록 주의)
                         bindingCampus.navigateToKakaoMapButton.setOnClickListener {
                             val destinationLat = clickedBuilding.third
                             val destinationLng = clickedBuilding.fourth
                             openKakaoMapNavigation(destinationLat, destinationLng)
-                            bindingCampus.buildingInfoLayout.visibility = View.GONE // 이동 후 UI 숨기기 (선택 사항)
+                            bindingCampus.buildingInfoLayout.visibility = View.GONE
                         }
                     } else {
-                        // 클릭된 마커에 해당하는 건물을 찾지 못한 경우 처리 (선택 사항)
                         bindingCampus.buildingInfoLayout.visibility = View.GONE
                     }
                     false
@@ -151,7 +152,6 @@ class Campus : AppCompatActivity() {
                 bindingCampus.closeButton.setOnClickListener {
                     bindingCampus.buildingInfoLayout.visibility = View.GONE
                 }
-
             }
         })
 
@@ -162,6 +162,23 @@ class Campus : AppCompatActivity() {
         chatImageView.setOnClickListener { startActivity(Intent(this, Chat::class.java)) }
         leftArrow.setOnClickListener { finish() }
     }
+
+    // 건물 번호로 위치를 찾아 카메라를 이동하는 함수
+    private fun findAndMoveCameraToBuilding(buildingNumber: String) {
+        val targetBuilding = buildings.find { it.first == buildingNumber }
+        if (targetBuilding != null) {
+            val targetLatLng = LatLng.from(targetBuilding.third, targetBuilding.fourth)
+            val cameraUpdate = CameraUpdateFactory.newCenterPosition(targetLatLng, 19)
+            kakaoMap?.moveCamera(cameraUpdate)
+            Log.d("Campus", "카메라 이동 (건물 번호): ${targetBuilding.second} (${targetBuilding.third}, ${targetBuilding.fourth})")
+        } else {
+            Log.w("Campus", "해당하는 건물 번호를 찾을 수 없습니다: $buildingNumber")
+            Toast.makeText(this, "'$buildingNumber' 건물 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            getCurrentLocation()
+        }
+    }
+
+
 
     private fun getCurrentLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -319,6 +336,8 @@ class Campus : AppCompatActivity() {
         currentLocationForNavigation?.let { startLocation ->
             val startLat = startLocation.latitude
             val startLng = startLocation.longitude
+
+            //카카오 맵 uri를 몰라서 웹으로 이동하는 uri를 썻습니다 혹시 쓴다면 여기를 바꾸세요
             val uri = Uri.parse("https://map.kakao.com/link/search/$destLat,$destLng") // 도착지 좌표 검색 후 길찾기 유도
 
             Log.d("NavigationUri", "생성된 URI: $uri")
@@ -333,8 +352,8 @@ class Campus : AppCompatActivity() {
                 startActivity(intent)
             } else {
                 Toast.makeText(this, "카카오맵 앱을 설치해주세요.", Toast.LENGTH_SHORT).show()
-                //val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=net.daum.android.map"))
-                //startActivity(marketIntent)
+                val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=net.daum.android.map"))
+                startActivity(marketIntent)
             }
         } ?: run {
             Toast.makeText(this, "현재 위치를 가져올 수 없어 길찾기를 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
