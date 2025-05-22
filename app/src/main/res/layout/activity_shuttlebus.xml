@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:background="#E8EAF6">
 
-    <!-- 상단 헤더 -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
@@ -39,69 +38,260 @@
 
     </LinearLayout>
 
-    <!-- 가운데 ui 만드는 곳 -->
-
-    <ScrollView
-        android:id="@+id/shuttle_content"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_above="@id/bottom_menu"
         android:layout_below="@id/header"
-        android:padding="20dp">
+        android:layout_marginTop="9dp"
+        android:layout_marginBottom="-9dp"
+        android:background="@color/white"
+        android:paddingTop="40dp"
+        android:paddingBottom="20dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/station_1_text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="0dp"
+            android:text="   정문 (서브웨이 앞)   "
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
-            <ImageView
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="16dp"
-                android:src="@drawable/ic_bus"/>
+        <TextView
+            android:id="@+id/station_2_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/station_1_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text="    중문 (우체국 앞)     "
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
-            <TextView
-                android:text="청주대학교 셔틀버스 안내"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:layout_marginBottom="8dp"/>
+        <TextView
+            android:id="@+id/station_3_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/station_2_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text="       보건의료대학       "
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
-            <TextView
-                android:text="셔틀버스 시간표 및 노선 정보는 학교 공식 홈페이지를 통해 확인할 수 있습니다."
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="#555555"
-                android:gravity="center"
-                android:layout_marginBottom="24dp"/>
+        <TextView
+            android:id="@+id/station_4_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/station_3_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text=" 학생회관 (운동장 뒤) "
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
-            <Button
-                android:id="@+id/btn_shuttle_link"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="셔틀버스 페이지 열기"
-                android:textAllCaps="false"
-                android:backgroundTint="#3557C8"
-                android:textColor="#FFFFFF"
-                android:paddingLeft="24dp"
-                android:paddingRight="24dp"
-                android:padding="12dp"
-                android:paddingBottom="12dp"
-                android:layout_marginTop="12dp"/>
+        <TextView
+            android:id="@+id/station_5_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/station_4_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text="예술대학 (미래창조관)"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
-        </LinearLayout>
-    </ScrollView>
+        <TextView
+            android:id="@+id/station_6_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/station_5_text"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="50dp"
+            android:text="  기숙사 (버스정류장)  "
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+        <!-- 왼쪽 연결선 (하나의 긴 선) -->
+
+        <!-- 왼쪽 점들 (일직선으로 정렬) -->
+        <View
+            android:id="@+id/left_connecting_line"
+            android:layout_width="3dp"
+            android:layout_height="380dp"
+            android:layout_alignTop="@id/station_1_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="82dp"
+            android:layout_marginTop="11dp"
+            android:background="#3557c8" />
+
+        <ImageView
+            android:id="@+id/dot_left_1"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_1_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
 
 
 
+        <ImageView
+            android:id="@+id/dot_left_2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_2_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/bus_down_1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignTop="@id/station_2_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="55dp"
+            android:layout_marginTop="-10dp"
+            android:src="@drawable/bus_down" />
+
+        <ImageView
+            android:id="@+id/dot_left_3"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_3_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_left_4"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_4_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_left_5"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_5_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_left_6"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_6_text"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="0dp"
+            android:src="@drawable/dot_blue" />
+
+        <!-- 오른쪽 연결선 (하나의 긴 선) -->
+
+        <!-- 오른쪽 점들 (일직선으로 정렬) -->
+        <View
+            android:id="@+id/right_connecting_line"
+            android:layout_width="3dp"
+            android:layout_height="380dp"
+            android:layout_alignTop="@id/station_1_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="17dp"
+            android:layout_marginEnd="82dp"
+            android:background="#3557c8" />
+
+        <ImageView
+            android:id="@+id/dot_right_1"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_1_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
 
 
-    <!-- 하단 메뉴 (완전 아래 고정) -->
+        <ImageView
+            android:id="@+id/dot_right_2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_2_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_right_3"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_3_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_right_4"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_4_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/bus_up_1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignTop="@id/station_4_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="-10dp"
+            android:layout_marginEnd="55dp"
+            android:src="@drawable/bus_down" />
+
+        <ImageView
+            android:id="@+id/dot_right_5"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_5_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/dot_right_6"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/station_6_text"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginEnd="68dp"
+            android:src="@drawable/dot_blue" />
+
+    </RelativeLayout>
+
+    <View
+        android:id="@+id/bottom_menu_divider"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#CCCCCC"
+        android:layout_above="@id/bottom_menu" />
+
     <LinearLayout
         android:id="@+id/bottom_menu"
         android:layout_width="match_parent"
@@ -124,7 +314,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/home"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -147,7 +338,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/time"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -170,7 +362,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/map"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -193,7 +386,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/chat"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"

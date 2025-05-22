@@ -122,7 +122,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/home"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -145,7 +146,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/time"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -168,7 +170,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/bus"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -191,7 +194,8 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/chat"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"

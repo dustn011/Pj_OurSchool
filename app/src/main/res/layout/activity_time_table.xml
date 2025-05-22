@@ -863,13 +863,13 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/home"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="홈"
-                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -886,13 +886,13 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/map"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="캠퍼스맵"
-                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -909,13 +909,13 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/bus"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="셔틀버스"
-                android:textColor="@android:color/black"
                 android:textSize="22sp" />
         </LinearLayout>
 
@@ -932,20 +932,14 @@
                 android:layout_height="60dp"
                 android:layout_margin="8dp"
                 android:src="@drawable/chat"
-                android:background="#3557C8"/>
+                android:background="@drawable/rounded_background"
+                android:padding="8dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="채팅"
-                android:textColor="@android:color/black"
                 android:textSize="22sp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="38dp"
-                android:background="@android:color/transparent"/>
-
         </LinearLayout>
 
     </LinearLayout>
