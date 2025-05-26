@@ -43,8 +43,6 @@
         android:layout_height="match_parent"
         android:layout_above="@id/bottom_menu"
         android:layout_below="@id/header"
-        android:layout_marginTop="9dp"
-        android:layout_marginBottom="-9dp"
         android:background="@color/white"
         android:paddingTop="40dp"
         android:paddingBottom="20dp">
@@ -114,9 +112,6 @@
             android:textColor="@android:color/black"
             android:textSize="18sp" />
 
-        <!-- 왼쪽 연결선 (하나의 긴 선) -->
-
-        <!-- 왼쪽 점들 (일직선으로 정렬) -->
         <View
             android:id="@+id/left_connecting_line"
             android:layout_width="3dp"
@@ -149,15 +144,7 @@
             android:layout_marginTop="0dp"
             android:src="@drawable/dot_blue" />
 
-        <ImageView
-            android:id="@+id/bus_down_1"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_alignTop="@id/station_2_text"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="55dp"
-            android:layout_marginTop="-10dp"
-            android:src="@drawable/bus_down" />
+
 
         <ImageView
             android:id="@+id/dot_left_3"
@@ -199,9 +186,16 @@
             android:layout_marginTop="0dp"
             android:src="@drawable/dot_blue" />
 
-        <!-- 오른쪽 연결선 (하나의 긴 선) -->
+        <ImageView
+            android:id="@+id/bus_down_1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/bus_down"
+            android:layout_alignStart="@id/dot_left_1"
+            android:layout_alignTop="@id/dot_left_1"
+            android:layout_marginStart="-10dp"
+            android:layout_marginTop="-10dp"/>
 
-        <!-- 오른쪽 점들 (일직선으로 정렬) -->
         <View
             android:id="@+id/right_connecting_line"
             android:layout_width="3dp"
@@ -253,15 +247,7 @@
             android:layout_marginEnd="68dp"
             android:src="@drawable/dot_blue" />
 
-        <ImageView
-            android:id="@+id/bus_up_1"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_alignTop="@id/station_4_text"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="-10dp"
-            android:layout_marginEnd="55dp"
-            android:src="@drawable/bus_down" />
+
 
         <ImageView
             android:id="@+id/dot_right_5"
@@ -282,6 +268,16 @@
             android:layout_marginTop="0dp"
             android:layout_marginEnd="68dp"
             android:src="@drawable/dot_blue" />
+
+        <ImageView
+            android:id="@+id/bus_up_1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/bus_down"
+            android:layout_alignEnd="@id/dot_right_6"
+            android:layout_alignTop="@id/dot_right_6"
+            android:layout_marginEnd="-10dp"
+            android:layout_marginTop="-10dp"   />
 
     </RelativeLayout>
 
