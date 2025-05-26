@@ -15,13 +15,16 @@ import android.util.Log
 // 가상의 셔틀 스케줄 제공
 object ShuttleService {
     fun getShuttleSchedules(): List<Shuttle> = listOf(
-        Shuttle(1, "셔틀버스1", "평일", "21:40", "정문 (서브웨이 앞)"),
-
-        Shuttle(5, "셔틀버스2", "평일", "21:40", "기숙사 (버스정류장)")
+        Shuttle(1, "셔틀버스2", "평일", "22:10", "정문 (서브웨이 앞)"),
+        Shuttle(1, "셔틀버스1", "평일", "22:20", "정문 (서브웨이 앞)"),
+        Shuttle(5, "셔틀버스1", "평일", "22:10", "기숙사 (버스정류장)"),
+        Shuttle(5, "셔틀버스2", "평일", "22:20", "기숙사 (버스정류장)")
     )
 
     fun isHoliday(dayOfWeek: String): Boolean {
-        return dayOfWeek == "토" || dayOfWeek == "일"
+        val today = Calendar.getInstance(Locale.KOREA)
+        val dayOfWeekInt = today.get(Calendar.DAY_OF_WEEK)
+        return dayOfWeekInt == Calendar.SATURDAY || dayOfWeekInt == Calendar.SUNDAY
     }
 }
 
@@ -39,7 +42,7 @@ class ShuttleBus : AppCompatActivity() {
     private val stationOrderUp = listOf("기숙사", "예술대학", "학생회관", "보건의료대학", "중문", "정문")
 
     private lateinit var busDown1: ImageView
-    private lateinit var busUp1: ImageView // 'busUp1' 변수 선언 추가
+    private lateinit var busUp1: ImageView
 
     private var animationHandler: Handler? = null
     private var updateRunnable: Runnable? = null
@@ -75,34 +78,32 @@ class ShuttleBus : AppCompatActivity() {
         chatImageView.setOnClickListener { startActivity(Intent(this, Chat::class.java)) }
         leftArrow.setOnClickListener { finish() }
 
-        // stationYCoordinates 및 busBaseY를 초기화
-        // onGlobalLayoutListener는 레이아웃 측정이 완료되어 뷰의 실제 위치와 크기를 알 수 있을 때 호출됩니다.
         findViewById<View>(R.id.station_1_text).viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
-                // 한 번만 호출되도록 리스너 제거
                 findViewById<View>(R.id.station_1_text).viewTreeObserver.removeOnGlobalLayoutListener(this)
 
-                // --- 각 '닷' 이미지뷰의 중앙 Y 좌표를 stationYCoordinates에 저장 ---
-                // XML에 정의된 dot_left_N ID를 사용하여 각 닷의 Y 좌표를 직접 가져옵니다.
-                // 닷의 Y 좌표 + 닷 높이의 절반 = 닷의 중앙 Y 좌표
                 stationYCoordinates["정문"] = findViewById<View>(R.id.dot_left_1).y + findViewById<View>(R.id.dot_left_1).height / 2f
                 stationYCoordinates["중문"] = findViewById<View>(R.id.dot_left_2).y + findViewById<View>(R.id.dot_left_2).height / 2f
                 stationYCoordinates["보건의료대학"] = findViewById<View>(R.id.dot_left_3).y + findViewById<View>(R.id.dot_left_3).height / 2f
                 stationYCoordinates["학생회관"] = findViewById<View>(R.id.dot_left_4).y + findViewById<View>(R.id.dot_left_4).height / 2f
                 stationYCoordinates["예술대학"] = findViewById<View>(R.id.dot_left_5).y + findViewById<View>(R.id.dot_left_5).height / 2f
                 stationYCoordinates["기숙사"] = findViewById<View>(R.id.dot_left_6).y + findViewById<View>(R.id.dot_left_6).height / 2f
-                // --- 닷 중앙 Y 좌표 저장 끝 ---
 
-                // --- 여기에서 각 버스의 "기준선" Y 좌표를 정확하게 저장 ---
-                // 이 시점에서는 버스 이미지의 'y' 속성이 레이아웃에서 배치된 절대 Y 위치를 나타냅니다.
-                // 이 값을 '기준선'으로 삼아 translationY를 계산합니다.
+                // 기숙사 (오른쪽) 정류장 좌표도 추가 (dot_right_6에 매핑)
+                stationYCoordinates["기숙사(오른쪽)"] = findViewById<View>(R.id.dot_right_6).y + findViewById<View>(R.id.dot_right_6).height / 2f
+                stationYCoordinates["예술대학(오른쪽)"] = findViewById<View>(R.id.dot_right_5).y + findViewById<View>(R.id.dot_right_5).height / 2f
+                stationYCoordinates["학생회관(오른쪽)"] = findViewById<View>(R.id.dot_right_4).y + findViewById<View>(R.id.dot_right_4).height / 2f
+                stationYCoordinates["보건의료대학(오른쪽)"] = findViewById<View>(R.id.dot_right_3).y + findViewById<View>(R.id.dot_right_3).height / 2f
+                stationYCoordinates["중문(오른쪽)"] = findViewById<View>(R.id.dot_right_2).y + findViewById<View>(R.id.dot_right_2).height / 2f
+                stationYCoordinates["정문(오른쪽)"] = findViewById<View>(R.id.dot_right_1).y + findViewById<View>(R.id.dot_right_1).height / 2f
+
+
                 if (busDown1BaseY == -1f) {
                     busDown1BaseY = busDown1.y
                 }
                 if (busUp1BaseY == -1f) {
                     busUp1BaseY = busUp1.y
                 }
-                // --- 기준선 Y 좌표 저장 끝 ---
 
                 startPeriodicShuttleUpdate()
             }
@@ -145,8 +146,9 @@ class ShuttleBus : AppCompatActivity() {
                 val departureMillis = departureCal.timeInMillis
 
                 val numberOfStationsInRoute = getRouteLength(shuttle.departureStation)
+                // 총 소요 시간 = (각 정류장 정차 시간 * 정류장 수) + (중간 지점 정차 시간 * (정류장 수 - 1))
                 val totalDurationSeconds = (numberOfStationsInRoute * STATIONARY_DURATION_SECONDS) +
-                        ((numberOfStationsInRoute - 1) * STATIONARY_DURATION_SECONDS)
+                        ((numberOfStationsInRoute - 1) * STATIONARY_DURATION_SECONDS) // TRAVEL_DURATION_BETWEEN_POINTS_SECONDS가 0이므로 실질적으로 중간 지점 정차 시간만큼만 추가됨
 
                 val arrivalMillis = departureMillis + totalDurationSeconds * 1000L
 
@@ -166,11 +168,16 @@ class ShuttleBus : AppCompatActivity() {
             Log.d("ShuttleBus", "Debug: Active Shuttle - $busName: ${shuttle.departureTime} from ${shuttle.departureStation}")
         }
 
+        // '셔틀버스1'은 정문에서 출발하는 노선 (왼쪽 라인)
         val shuttleDown = activeShuttles["셔틀버스1"]
-        updateSingleShuttlePosition(shuttleDown, busDown1, stationOrderDown, "셔틀버스1", busDown1BaseY)
-
+        // '셔틀버스2'는 기숙사에서 출발하는 노선 (오른쪽 라인)
         val shuttleUp = activeShuttles["셔틀버스2"]
-        updateSingleShuttlePosition(shuttleUp, busUp1, stationOrderUp, "셔틀버스2", busUp1BaseY)
+
+        // 셔틀버스1 (정문 출발) 업데이트
+        updateSingleShuttlePosition(shuttleDown, busDown1, stationOrderDown, "셔틀버스1", busDown1BaseY, findViewById(R.id.dot_left_1))
+
+        // 셔틀버스2 (기숙사 출발) 업데이트
+        updateSingleShuttlePosition(shuttleUp, busUp1, stationOrderUp, "셔틀버스2", busUp1BaseY, findViewById(R.id.dot_right_6))
     }
 
     private fun getRouteLength(departureStation: String): Int {
@@ -187,7 +194,8 @@ class ShuttleBus : AppCompatActivity() {
         busImage: ImageView,
         route: List<String>,
         busName: String,
-        baseBusY: Float
+        baseBusY: Float,
+        initialDot: ImageView // 해당 노선의 시작점 닷 이미지뷰
     ) {
         val now = Calendar.getInstance()
         val currentTimeMillis = now.timeInMillis
@@ -197,7 +205,17 @@ class ShuttleBus : AppCompatActivity() {
             return
         }
 
+        // 셔틀버스 이미지 초기 위치 설정
+        if (busImage.visibility == View.GONE) { // 한 번만 초기화
+            val initialDotCenterY = initialDot.y + initialDot.height / 2f
+            val busHeight = busImage.height.toFloat()
+            val busCenterYToImageTopOffset = busHeight / 2f
+            val targetBusImageTopYAbsolute = initialDotCenterY - busCenterYToImageTopOffset
+            val initialTranslationY = targetBusImageTopYAbsolute - baseBusY
+            busImage.translationY = initialTranslationY
+        }
         busImage.visibility = View.VISIBLE
+
 
         val (hour, minute) = shuttle.departureTime.split(":").map { it.toInt() }
         val departureCal = now.clone() as Calendar
@@ -210,9 +228,6 @@ class ShuttleBus : AppCompatActivity() {
         val elapsedSecondsFromDeparture = (currentTimeMillis - departureMillis) / 1000L
 
         val busHeight = busImage.height.toFloat()
-        // 버스 중앙을 닷 중앙에 맞추기 위한 Y 오프셋
-        // calculatedDotCenterY는 닷의 중앙 Y 좌표이므로, 버스의 상단도 그곳에 오도록 하려면
-        // 닷 중앙에서 버스 높이의 절반만큼 위로 올라가야 합니다.
         val busCenterYToImageTopOffset = busHeight / 2f
 
 
@@ -238,6 +253,9 @@ class ShuttleBus : AppCompatActivity() {
             accumulatedSegmentTime = stopAtStationEndTime
 
             // 2. 다음 정류장으로 이동하는 '중간 지점' 정차 구간
+            // TRAVEL_DURATION_BETWEEN_POINTS_SECONDS 가 0이므로,
+            // 이 로직은 각 정류장 사이에 '중간 지점'이라는 가상의 정차 지점을 만들고,
+            // 거기서도 STATIONARY_DURATION_SECONDS 만큼 멈추는 것으로 해석됩니다.
             if (i < route.size - 1) {
                 val nextStation = route[i + 1]
                 val nextStationY = stationYCoordinates[nextStation] ?: continue
@@ -254,6 +272,7 @@ class ShuttleBus : AppCompatActivity() {
                 }
                 accumulatedSegmentTime = stopAtMidPointEndTime
             } else {
+                // 최종 목적지에 도착한 후의 처리
                 calculatedDotCenterY = currentStationY
                 hasPositionFound = true
                 Log.d("ShuttleBus", "${busName} ${shuttle.departureTime}: 최종 목적지 ${currentStation} 도착. Elapsed: $elapsedSecondsFromDeparture}")
@@ -267,13 +286,14 @@ class ShuttleBus : AppCompatActivity() {
 
             busImage.translationY = newTargetTranslationY
         } else {
+            // 현재 시간이 어떤 위치에도 해당하지 않으면 (예: 운행 시작 전이거나 운행이 완전히 종료된 후)
+            // 셔틀버스를 화면에서 숨깁니다.
             busImage.visibility = View.GONE
         }
 
         // 상세 로그 (디버깅용)
         Log.d("ShuttleBus", "--- ${busName} ${shuttle.departureTime} RESULT ---")
         Log.d("ShuttleBus", "Final Calculated Dot Center Y (Absolute): $calculatedDotCenterY")
-
         Log.d("ShuttleBus", "Bus Image Current Visibility: ${if (busImage.visibility == View.VISIBLE) "VISIBLE" else "GONE"}")
     }
 }

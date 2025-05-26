@@ -101,6 +101,7 @@
             android:textColor="@android:color/black"
             android:textSize="18sp" />
 
+
         <TextView
             android:id="@+id/station_6_text"
             android:layout_width="wrap_content"
@@ -185,6 +186,8 @@
             android:layout_marginStart="68dp"
             android:layout_marginTop="0dp"
             android:src="@drawable/dot_blue" />
+
+
 
         <ImageView
             android:id="@+id/bus_down_1"
