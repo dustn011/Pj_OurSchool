@@ -47,12 +47,24 @@
         android:paddingTop="40dp"
         android:paddingBottom="20dp">
 
+        <ImageView
+            android:id="@+id/connecting_line_top"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/dot_left_1"
+            android:layout_alignStart="@+id/left_connecting_line"
+            android:layout_alignEnd="@+id/right_connecting_line"
+            android:layout_marginTop="-40dp"
+            android:src="@drawable/group_1"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"/>
+
         <TextView
             android:id="@+id/station_1_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="0dp"
+            android:layout_marginTop="50dp"
             android:text="   정문 (서브웨이 앞)   "
             android:textColor="@android:color/black"
             android:textSize="18sp" />
@@ -281,6 +293,21 @@
             android:layout_alignTop="@id/dot_right_6"
             android:layout_marginEnd="-10dp"
             android:layout_marginTop="-10dp"   />
+
+        <ImageView
+            android:id="@+id/connecting_line_bottom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/dot_left_6"
+            android:layout_alignStart="@+id/left_connecting_line"
+            android:layout_alignEnd="@id/right_connecting_line"
+            android:layout_marginBottom="-40dp"
+            android:src="@drawable/group_2"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"/>
+
+
+
 
     </RelativeLayout>
 
