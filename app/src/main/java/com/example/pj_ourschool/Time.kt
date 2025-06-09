@@ -3,6 +3,7 @@ package com.example.pj_ourschool
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri // 추가
 import android.os.Bundle
 import android.util.Log
 import android.widget.GridLayout
@@ -11,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import de.hdodenhof.circleimageview.CircleImageView // 추가
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,6 +23,10 @@ class Time : AppCompatActivity() {
     private lateinit var cells: Array<Array<TextView>>
     private lateinit var timetableGrid: GridLayout
     private lateinit var noticeTextView: TextView
+
+    // 프로필 이미지 관련 상수 추가
+    private val PROFILE_IMAGE_PREF = "profile_image_pref"
+    private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
 
     // 9개의 색상 미리 정의
     private val classColors = arrayOf(
@@ -38,10 +44,13 @@ class Time : AppCompatActivity() {
     private val classColorMap = mutableMapOf<String, Int>()
     private var colorIndex = 0
 
+    // profileImageView 타입을 ImageButton에서 CircleImageView로 변경
+    private lateinit var profileImageView: CircleImageView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_time_table)
+        setContentView(R.layout.activity_time_table) // XML 파일명 확인 (activity_time인지 activity_time_table인지)
 
         // SharedPreferences에서 아이디를 읽어옵니다.
         val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
@@ -49,7 +58,7 @@ class Time : AppCompatActivity() {
 
         // UI 요소 초기화
         val leftArrow: ImageButton = findViewById(R.id.left_arrow)
-        val profileImageView: ImageButton = findViewById(R.id.Profile)
+        profileImageView = findViewById(R.id.Profile) // CircleImageView 타입으로 초기화
         val homeImageView: ImageView = findViewById(R.id.home)
         val campusImageView: ImageView = findViewById(R.id.campus)
         val busImageView: ImageView = findViewById(R.id.bus)
@@ -94,6 +103,9 @@ class Time : AppCompatActivity() {
         // 시간표 데이터 불러와서 UI 업데이트
         loadTimetableData()
 
+        // **프로필 이미지 로드**
+        loadProfileImageUri()
+
         // 클릭 리스너 설정 (기존 코드와 동일)
         leftArrow.setOnClickListener { finish() }
         profileImageView.setOnClickListener {
@@ -117,7 +129,14 @@ class Time : AppCompatActivity() {
             startActivity(intent)
         }
     }
-    //실제 db연동하는 코드
+
+    override fun onResume() {
+        super.onResume()
+        // 액티비티가 재개될 때 프로필 이미지를 다시 로드하여 최신 상태 유지
+        loadProfileImageUri()
+    }
+
+    // 실제 db연동하는 코드
     private fun loadTimetableData() {
         lifecycleScope.launch {
             val timetableData = fetchTimetableDataFromMSSQL()
@@ -248,11 +267,24 @@ class Time : AppCompatActivity() {
             noticeTextView.text = "사이버강의: 없음"
         }
     }
-}
-private fun calculateBrightness(color: Int): Int {
-    val r = Color.red(color)
-    val g = Color.green(color)
-    val b = Color.blue(color)
-    // 인간의 눈은 초록색에 더 민감하고 파란색에 덜 민감하다는 공식
-    return (r * 0.299 + g * 0.587 + b * 0.114).toInt()
+
+    // --- 프로필 이미지 로드 함수 추가 ---
+    private fun loadProfileImageUri() {
+        val sharedPref = getSharedPreferences(PROFILE_IMAGE_PREF, Context.MODE_PRIVATE)
+        val savedUriString = sharedPref.getString(KEY_PROFILE_IMAGE_URI, null)
+
+        if (savedUriString != null) {
+            try {
+                val uri = Uri.parse(savedUriString)
+                profileImageView.setImageURI(uri)
+            } catch (e: Exception) {
+                Log.e("TimeActivity", "Error loading profile image URI: ${e.message}")
+                profileImageView.setImageResource(R.drawable.default_profile)
+                // 오류 발생 시 저장된 URI 제거하여 다시 로드 시도하지 않도록
+                sharedPref.edit().remove(KEY_PROFILE_IMAGE_URI).apply()
+            }
+        } else {
+            profileImageView.setImageResource(R.drawable.default_profile)
+        }
+    }
 }

@@ -31,11 +31,13 @@
             android:gravity="center"
             android:textColor="#FFFFFF"/>
 
-        <ImageView
+        <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/Profile"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:src="@drawable/default_profile" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/default_profile"
+            android:clickable="true"
+            android:focusable="true" />
 
     </LinearLayout>
 

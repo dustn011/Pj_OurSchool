@@ -18,11 +18,15 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import de.hdodenhof.circleimageview.CircleImageView // 이미 추가됨
 
 // java.time 패키지 임포트 (API 레벨 26 이상 필요)
 import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.format.TextStyle
+import android.content.Context // Context 임포트 추가
+import android.net.Uri // Uri 임포트 추가
+
 import com.example.pj_ourschool.MSSQLConnector // MSSQLConnector 임포트
 
 // 셔틀 데이터 클래스 (DB 스키마 및 쿼리 결과에 맞춤)
@@ -153,6 +157,13 @@ class ShuttleBus : AppCompatActivity() {
     // 현재 로드된 셔틀 스케줄 데이터
     private var currentActiveShuttles: List<Shuttle> = emptyList()
 
+    // 프로필 이미지 관련 상수 추가
+    private val PROFILE_IMAGE_PREF = "profile_image_pref"
+    private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
+
+    // profileImageView 타입을 ImageView에서 CircleImageView로 변경
+    private lateinit var profileImageView: CircleImageView
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -162,7 +173,7 @@ class ShuttleBus : AppCompatActivity() {
         busDown1 = findViewById(R.id.bus_down_1) // 정문 출발 버스 이미지뷰
         busUp1 = findViewById(R.id.bus_up_1)     // 기숙사 출발 버스 이미지뷰
 
-        val profileImageView: ImageView = findViewById(R.id.Profile)
+        profileImageView = findViewById(R.id.Profile) // CircleImageView 타입으로 초기화
         val homeImageView: ImageView = findViewById(R.id.home)
         val timeImageView: ImageView = findViewById(R.id.time)
         val campusImageView: ImageView = findViewById(R.id.campus)
@@ -187,6 +198,9 @@ class ShuttleBus : AppCompatActivity() {
         leftArrow.setOnClickListener {
             finish()
         }
+
+        // **프로필 이미지 로드**
+        loadProfileImageUri()
 
         // 뷰의 레이아웃이 완료될 때까지 기다렸다가 좌표 초기화 및 업데이트 시작
         findViewById<View>(R.id.station_1_text).viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -222,6 +236,12 @@ class ShuttleBus : AppCompatActivity() {
                 startPeriodicShuttleUpdate()
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 액티비티가 재개될 때 프로필 이미지를 다시 로드하여 최신 상태 유지
+        loadProfileImageUri()
     }
 
     override fun onDestroy() {
@@ -451,7 +471,7 @@ class ShuttleBus : AppCompatActivity() {
             return
         }
         val hour = timeParts[0].toIntOrNull() ?: run {
-            Log.e(TAG, "$busName: 시간 변환 실패: ${shuttle.departureTime}. 버스 숨김 처리.")
+            Log.e(TAG, "$busName: 시간 변환 실패:     ${shuttle.departureTime}. 버스 숨김 처리.")
             busImage.visibility = View.GONE
             return
         }
@@ -562,6 +582,26 @@ class ShuttleBus : AppCompatActivity() {
             } else {
                 Log.d(TAG, "$busName: 현재 경과 시간에 해당하는 위치를 찾을 수 없음. 이미 숨겨져 있음.")
             }
+        }
+    }
+
+    // --- 프로필 이미지 로드 함수 추가 ---
+    private fun loadProfileImageUri() {
+        val sharedPref = getSharedPreferences(PROFILE_IMAGE_PREF, Context.MODE_PRIVATE)
+        val savedUriString = sharedPref.getString(KEY_PROFILE_IMAGE_URI, null)
+
+        if (savedUriString != null) {
+            try {
+                val uri = Uri.parse(savedUriString)
+                profileImageView.setImageURI(uri)
+            } catch (e: Exception) {
+                Log.e("ShuttleBusActivity", "Error loading profile image URI: ${e.message}")
+                profileImageView.setImageResource(R.drawable.default_profile)
+                // 오류 발생 시 저장된 URI 제거하여 다시 로드 시도하지 않도록
+                sharedPref.edit().remove(KEY_PROFILE_IMAGE_URI).apply()
+            }
+        } else {
+            profileImageView.setImageResource(R.drawable.default_profile)
         }
     }
 }

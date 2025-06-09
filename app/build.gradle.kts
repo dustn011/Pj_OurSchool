@@ -52,6 +52,7 @@ dependencies {
     
     // 새로 추가
     implementation("com.kakao.sdk:v2-all:2.21.2")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 
 
 

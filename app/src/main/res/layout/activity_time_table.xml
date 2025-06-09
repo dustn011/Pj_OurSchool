@@ -44,15 +44,13 @@
             app:layout_constraintStart_toEndOf="@+id/left_arrow"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageButton
+        <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/Profile"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="프로필"
-            android:scaleType="centerInside"
             android:src="@drawable/default_profile"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="프로필"
+            android:scaleType="centerCrop" android:background="?attr/selectableItemBackgroundBorderless" app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,9 +1,11 @@
 package com.example.pj_ourschool
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -18,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Call
@@ -28,8 +31,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 import java.sql.Connection
-import java.sql.DriverManager
-import com.example.pj_ourschool.MSSQLConnector
+import java.sql.ResultSet
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -43,102 +49,88 @@ class MainActivity : AppCompatActivity() {
     private lateinit var campusImageView: ImageView
     private lateinit var busImageView: ImageView
     private lateinit var chatImageView: ImageView
-    private lateinit var profileImageView: ImageView
+    private lateinit var profileImageView: CircleImageView
     private lateinit var plusScreen1: LinearLayout
-    private lateinit var plusScreen2: CardView
+    private lateinit var plusScreen2: LinearLayout
     private lateinit var plusScreen3: CardView
-    private lateinit var plusScreen1TextView: TextView // 추가
-    private lateinit var weatherImageView: ImageView // 수정됨 (아이콘 추가)
+    private lateinit var plusScreen1TextView: TextView
+    private lateinit var weatherImageView: ImageView
+    private lateinit var todayScheduleTextView: TextView
 
+    private val PROFILE_IMAGE_PREF = "profile_image_pref"
+    private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-
 
         timeImageView = findViewById(R.id.time)
         campusImageView = findViewById(R.id.campus)
         busImageView = findViewById(R.id.bus)
         chatImageView = findViewById(R.id.chat)
         profileImageView = findViewById(R.id.Profile)
-        plusScreen1 = findViewById(R.id.plusScreen1) // LinearLayout이 아니라 CardView 타입으로 선언했다면 맞춰줘야 함
+
+        plusScreen1 = findViewById(R.id.plusScreen1)
         plusScreen2 = findViewById(R.id.plusScreen2)
         plusScreen3 = findViewById(R.id.plusScreen3)
 
-        weatherImageView = findViewById(R.id.weatherImageView) // 수정됨 (아이콘 연결)
+        weatherImageView = findViewById(R.id.weatherImageView)
         plusScreen1TextView = findViewById(R.id.plusScreen1TextView)
+        todayScheduleTextView = findViewById(R.id.todayScheduleTextView)
 
-
-
-
-
+        loadProfileImageUri()
 
         profileImageView.setOnClickListener {
             val intent = Intent(this, Profile::class.java)
             startActivity(intent)
-
         }
-
         timeImageView.setOnClickListener {
-            // 시간표 화면으로 이동
             val intent = Intent(this, Time::class.java)
             startActivity(intent)
-
         }
         campusImageView.setOnClickListener {
-            // 캠퍼스맵 화면으로 이동
             val intent = Intent(this, Campus::class.java)
             startActivity(intent)
-
         }
-
         busImageView.setOnClickListener {
-            // 셔틀버스 화면으로 이동
             val intent = Intent(this, ShuttleBus::class.java)
             startActivity(intent)
-
         }
-
         chatImageView.setOnClickListener {
-            // 채팅 화면으로 이동
             val intent = Intent(this, Chat::class.java)
             startActivity(intent)
-
         }
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 LOCATION_PERMISSION_REQUEST_CODE)
         } else {
-            // Permission already granted
             getCurrentLocationAndFetchWeather()
         }
-        // MainActivity 시작 시 데이터베이스에서 정보 가져오기 (예시)
 
-
+        loadTodayTimetable()
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadProfileImageUri()
+    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    // Permission granted
                     getCurrentLocationAndFetchWeather()
                 } else {
-                    // Permission denied
                     Toast.makeText(this, "위치 정보 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
                 }
                 return
             }
-            else -> {
-                // Ignore all other requests.
-            }
+            else -> {}
         }
     }
 
@@ -151,12 +143,9 @@ class MainActivity : AppCompatActivity() {
                     if (location != null) {
                         val latitude = location.latitude
                         val longitude = location.longitude
-
-                        // Fetch weather data
                         fetchWeather(latitude, longitude)
                     } else {
                         if (retryCount < 3) {
-                            // 조금 있다가 다시 시도 (재귀 호출)
                             Handler(Looper.getMainLooper()).postDelayed({
                                 getCurrentLocationAndFetchWeather(retryCount + 1)
                             }, 2000)
@@ -172,7 +161,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchWeather(latitude: Double, longitude: Double) {
-        val apiKey = "4635b3f633d14de002f86a3f58605f61" // Replace with your API key
+        val apiKey = "4635b3f633d14de002f86a3f58605f61"
 
         val weatherApiService = Retrofit.Builder()
             .baseUrl("https://api.openweathermap.org/")
@@ -188,8 +177,6 @@ class MainActivity : AppCompatActivity() {
                         weatherResponse?.let {
                             val temperature = it.main.temp
                             val description = it.weather[0].description
-
-                            // Update UI
                             updateWeatherUI(temperature, description)
                         }
                     } else {
@@ -205,11 +192,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateWeatherUI(temperature: Double, description: String) {
         val translatedDescription = translateWeatherDescription(description)
-        plusScreen1TextView.text = "현재 온도: $temperature°C\n날씨: $translatedDescription"
-
-        val weatherIconRes = getWeatherIcon(description) // 수정됨 (아이콘 가져오기 추가)
-        weatherImageView.setImageResource(weatherIconRes) // 수정됨 (아이콘 설정)
+        plusScreen1TextView.text = "현재 온도: ${String.format("%.1f", temperature)}°C\n날씨: $translatedDescription"
+        val weatherIconRes = getWeatherIcon(description)
+        weatherImageView.setImageResource(weatherIconRes)
     }
+
     private fun translateWeatherDescription(english: String): String {
         return when (english.lowercase()) {
             "clear sky" -> "맑음"
@@ -227,24 +214,184 @@ class MainActivity : AppCompatActivity() {
             "thunderstorm" -> "천둥번개"
             "snow" -> "눈"
             "mist" -> "안개"
-            else -> english // 번역 없으면 그대로 표시
+            else -> english
         }
     }
+
     private fun getWeatherIcon(description: String): Int {
         return when (description.lowercase()) {
-            "clear sky" -> R.drawable.ic_sun  // 맑음
-            "few clouds", "scattered clouds" -> R.drawable.ic_cloud_sun  // 구름 조금
-            "broken clouds", "overcast clouds" -> R.drawable.ic_cloud  // 흐림
-            "shower rain", "rain", "moderate rain", "light rain", "light intensity drizzle", "drizzle", "heavy intensity rain" -> R.drawable.ic_rain  // 비
-            "thunderstorm" -> R.drawable.ic_thunder  // 천둥번개
-            "snow" -> R.drawable.ic_snow  // 눈
-            "mist" -> R.drawable.ic_fog  // 안개
-            else -> R.drawable.ic_sun  // 기본 아이콘
+            "clear sky" -> R.drawable.ic_sun
+            "few clouds", "scattered clouds" -> R.drawable.ic_cloud_sun
+            "broken clouds", "overcast clouds" -> R.drawable.ic_cloud
+            "shower rain", "rain", "moderate rain", "light rain", "light intensity drizzle", "drizzle", "heavy intensity rain" -> R.drawable.ic_rain
+            "thunderstorm" -> R.drawable.ic_thunder
+            "snow" -> R.drawable.ic_snow
+            "mist" -> R.drawable.ic_fog
+            else -> R.drawable.ic_sun
+        }
+    }
+
+    private fun loadTodayTimetable() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val todayTimetable = fetchTodayTimetableFromMSSQL()
+            updateTodayScheduleUI(todayTimetable)
+        }
+    }
+
+    private suspend fun fetchTodayTimetableFromMSSQL(): List<Map<String, String?>> =
+        withContext(Dispatchers.IO) {
+            val resultList = mutableListOf<Map<String, String?>>()
+            val connection = MSSQLConnector.getConnection()
+            val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
+            val userId = sharedPref.getString("userId", "")
+
+            val currentDay = SimpleDateFormat("E", Locale.KOREA).format(Date())
+            val dayOfWeek = when (currentDay) {
+                "월" -> "월"
+                "화" -> "화"
+                "수" -> "수"
+                "목" -> "목"
+                "금" -> "금"
+                "토" -> "토"
+                "일" -> "일"
+                else -> ""
+            }
+
+            if (dayOfWeek == "토" || dayOfWeek == "일" || userId.isNullOrEmpty()) {
+                connection?.close()
+                return@withContext resultList
+            }
+
+            try {
+                if (connection != null) {
+                    val query = """
+                        SELECT
+                            ci.class_name,
+                            ci.class_schedule
+                        FROM student_schedule AS ss
+                        JOIN class_info AS ci
+                          ON ss.class_code = ci.class_code
+                         AND ss.class_section = ci.class_section
+                        WHERE ss.student_id = ?
+                          AND ci.class_schedule LIKE ?;
+                    """.trimIndent()
+                    val preparedStatement = connection.prepareStatement(query)
+                    preparedStatement.setString(1, userId)
+                    preparedStatement.setString(2, "%${dayOfWeek}(%")
+                    val resultSet: ResultSet = preparedStatement.executeQuery()
+
+                    val metaData = resultSet.metaData
+                    val columnCount = metaData.columnCount
+
+                    while (resultSet.next()) {
+                        val rowData = mutableMapOf<String, String?>()
+                        for (i in 1..columnCount) {
+                            val columnName = metaData.getColumnName(i)
+                            val columnValue = resultSet.getString(i)
+                            rowData[columnName] = columnValue
+                        }
+                        resultList.add(rowData)
+                    }
+                    resultSet.close()
+                    preparedStatement.close()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "시간표 정보를 가져오는 데 실패했습니다: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                connection?.close()
+            }
+            resultList
+        }
+
+    private fun updateTodayScheduleUI(todayScheduleData: List<Map<String, String?>>) {
+        // 날짜와 요일 표시
+        val currentDateFormat = SimpleDateFormat("M월 d일 (E)", Locale.KOREA)
+        val currentDateAndDay = currentDateFormat.format(Date())
+        val stringBuilder = StringBuilder()
+        stringBuilder.append("$currentDateAndDay\n")
+
+        Log.d("ScheduleDebug", "Date and Day added to StringBuilder: '$currentDateAndDay'")
+
+        val classList = mutableListOf<Triple<Int, Int, String>>() // Triple로 시작 시간, 끝 시간, 수업 정보 저장
+
+        val scheduleEntryPattern = Regex("([월화수목금])\\(((\\d+)(,\\d+)*)\\)")
+        val currentDayChar = SimpleDateFormat("E", Locale.KOREA).format(Date()).first()
+        val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val currentMinute = Calendar.getInstance().get(Calendar.MINUTE)
+
+        if (todayScheduleData.isNotEmpty()) {
+            Log.d("ScheduleDebug", "todayScheduleData is NOT empty. Attempting to parse schedule.")
+            for (result in todayScheduleData) {
+                val className = result["class_name"] as? String ?: continue
+                val classSchedule = result["class_schedule"] as? String ?: ""
+
+                val scheduleEntries = scheduleEntryPattern.findAll(classSchedule)
+                for (match in scheduleEntries) {
+                    val day = match.groupValues[1]
+                    val timeStr = match.groupValues[2]
+
+                    if (day.first() == currentDayChar) {
+                        val times = timeStr.split(",").mapNotNull { it.toIntOrNull() }.sorted()
+
+                        if (times.isNotEmpty()) {
+                            val startBlock = times.first()
+                            val endBlock = times.last()
+                            val startHour = 8 + startBlock
+                            val endHour = 8 + endBlock + 1 // 수업 블록이 1시간이라고 가정
+
+                            // 현재 시간과 비교하여 이미 지난 수업은 제외
+                            // 수업 종료 시간 (분은 00분으로 가정)
+                            val classEndTimeInMinutes = endHour * 60 + 0
+                            val currentTimeInMinutes = currentHour * 60 + currentMinute
+
+                            if (currentTimeInMinutes < classEndTimeInMinutes) {
+                                val formattedTime = String.format(Locale.getDefault(), "%02d:00~%02d:00", startHour, endHour)
+                                classList.add(Triple(startHour, endHour, "$formattedTime $className"))
+                                Log.d("ScheduleDebug", "Added class: $className at $formattedTime (Day: $day)")
+                            } else {
+                                Log.d("ScheduleDebug", "Skipped passed class: $className (Ended at $endHour:00, Current time: $currentHour:$currentMinute)")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        classList.sortBy { it.first } // 시작 시간 기준으로 정렬
+
+        if (classList.isNotEmpty()) {
+            classList.forEach {
+                stringBuilder.append("${it.third}\n")
+            }
+        } else {
+            stringBuilder.append("현재 진행 중이거나 예정된 수업이 없습니다.")
+        }
+
+        todayScheduleTextView.text = stringBuilder.toString().trimEnd()
+    }
+
+    private fun loadProfileImageUri() {
+        val sharedPref = getSharedPreferences(PROFILE_IMAGE_PREF, Context.MODE_PRIVATE)
+        val savedUriString = sharedPref.getString(KEY_PROFILE_IMAGE_URI, null)
+
+        if (savedUriString != null) {
+            try {
+                val uri = Uri.parse(savedUriString)
+                profileImageView.setImageURI(uri)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error loading profile image URI: ${e.message}")
+                profileImageView.setImageResource(R.drawable.default_profile)
+                sharedPref.edit().remove(KEY_PROFILE_IMAGE_URI).apply()
+            }
+        } else {
+            profileImageView.setImageResource(R.drawable.default_profile)
         }
     }
 }
 
-// Weather API interfaces and data classes
 interface WeatherApiService {
     @GET("data/2.5/weather")
     fun getWeather(

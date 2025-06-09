@@ -3,7 +3,7 @@ package com.example.pj_ourschool
 //위치 코드
 
 import android.Manifest
-import android.R.attr.label
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 
 import android.content.Intent
-import android.net.Uri
+import android.net.Uri // 추가
 import android.os.Bundle
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +32,7 @@ import com.kakao.vectormap.label.LabelLayer
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import android.widget.Toast
+import de.hdodenhof.circleimageview.CircleImageView // 추가
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -55,6 +56,14 @@ class Campus : AppCompatActivity() {
     private val REST_API_KEY = "2cb1433a2459d08c0fb7c0351fddd03d" // 여기에 실제 REST API 키를 넣어주세요.
     private var currentLocationForNavigation: Location? = null
 
+    // 프로필 이미지 관련 상수 추가
+    private val PROFILE_IMAGE_PREF = "profile_image_pref"
+    private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
+
+    // profileImageView 타입을 ImageView에서 CircleImageView로 변경
+    private lateinit var profileImageView: CircleImageView
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bindingCampus = ActivityCampusBinding.inflate(layoutInflater)
@@ -72,7 +81,7 @@ class Campus : AppCompatActivity() {
         val timeImageView: ImageView = findViewById(R.id.time)
         val busImageView: ImageView = findViewById(R.id.bus)
         val chatImageView: ImageView = findViewById(R.id.chat)
-        val profileImageView: ImageView = findViewById(R.id.Profile)
+        profileImageView = findViewById(R.id.Profile) // CircleImageView 타입으로 초기화
         val homeImageView: ImageView = findViewById(R.id.home)
 
         mapView.start(object : MapLifeCycleCallback() {
@@ -112,15 +121,6 @@ class Campus : AppCompatActivity() {
                 // 건물 마커 추가
                 addBuildingMarkers()
 
-                // ✅ 마커 추가 기능 제거
-                /*
-                kakaoMap?.setOnMapClickListener { _, position, _, _ ->
-                    addMarker(position)
-                }
-                */
-
-
-
                 kakaoMap?.setOnLabelClickListener { _, _, label ->
                     val clickedBuilding = buildings.find { it.second == label.tag?.toString() }
                     if (clickedBuilding != null) {
@@ -155,12 +155,21 @@ class Campus : AppCompatActivity() {
             }
         })
 
+        // **프로필 이미지 로드**
+        loadProfileImageUri()
+
         profileImageView.setOnClickListener { startActivity(Intent(this, Profile::class.java)) }
         homeImageView.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
         timeImageView.setOnClickListener { startActivity(Intent(this, Time::class.java)) }
         busImageView.setOnClickListener { startActivity(Intent(this, ShuttleBus::class.java)) }
         chatImageView.setOnClickListener { startActivity(Intent(this, Chat::class.java)) }
         leftArrow.setOnClickListener { finish() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 액티비티가 재개될 때 프로필 이미지를 다시 로드하여 최신 상태 유지
+        loadProfileImageUri()
     }
 
     // 건물 번호로 위치를 찾아 카메라를 이동하는 함수
@@ -396,4 +405,24 @@ class Campus : AppCompatActivity() {
         val third: C,
         val fourth: D
     )
+
+    // --- 프로필 이미지 로드 함수 추가 ---
+    private fun loadProfileImageUri() {
+        val sharedPref = getSharedPreferences(PROFILE_IMAGE_PREF, Context.MODE_PRIVATE)
+        val savedUriString = sharedPref.getString(KEY_PROFILE_IMAGE_URI, null)
+
+        if (savedUriString != null) {
+            try {
+                val uri = Uri.parse(savedUriString)
+                profileImageView.setImageURI(uri)
+            } catch (e: Exception) {
+                Log.e("CampusActivity", "Error loading profile image URI: ${e.message}")
+                profileImageView.setImageResource(R.drawable.default_profile)
+                // 오류 발생 시 저장된 URI 제거하여 다시 로드 시도하지 않도록
+                sharedPref.edit().remove(KEY_PROFILE_IMAGE_URI).apply()
+            }
+        } else {
+            profileImageView.setImageResource(R.drawable.default_profile)
+        }
+    }
 }
