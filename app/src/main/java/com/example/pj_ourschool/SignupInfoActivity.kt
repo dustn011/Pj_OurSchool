@@ -13,10 +13,23 @@ import android.view.LayoutInflater
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
-// MSSQLConnector 클래스가 같은 패키지에 있거나 import 경로가 맞는지 확인해주세요.
-import com.example.pj_ourschool.MSSQLConnector
+import java.util.concurrent.TimeUnit
+import com.example.pj_ourschool.MSSQLConnector // MSSQLConnector 임포트 확인
+
+// Firebase 관련 import 추가
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
+
 
 class SignupInfoActivity : AppCompatActivity() {
+
+    // Firebase Auth 인스턴스
+    private lateinit var auth: FirebaseAuth
+    private var verificationId: String? = null // Firebase가 발송한 인증 ID
+    private var resendToken: PhoneAuthProvider.ForceResendingToken? = null // 인증번호 재발송 토큰
 
     private lateinit var editSchoolId: EditText
     private lateinit var editPassword: EditText
@@ -48,6 +61,9 @@ class SignupInfoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup_info)
+
+        // Firebase Auth 초기화
+        auth = FirebaseAuth.getInstance()
 
         // View 바인딩
         editSchoolId = findViewById(R.id.editSchoolId)
@@ -144,7 +160,7 @@ class SignupInfoActivity : AppCompatActivity() {
 
             Log.d(TAG, "Attempting school verification for ID: $id")
             // 비밀번호는 보안상 로그에 직접 출력하지 않는 것이 좋습니다.
-            Log.d(TAG, "Password: $pw") // 제거 권장, 디버깅 용도로만 잠시 사용
+            // Log.d(TAG, "Password: $pw") // 디버깅 완료 후 제거 권장
 
             CoroutineScope(Dispatchers.IO).launch {
                 val connection = MSSQLConnector.getConnection()
@@ -252,21 +268,24 @@ class SignupInfoActivity : AppCompatActivity() {
             }
 
             val schoolId = editSchoolId.text.toString().trim()
-            val phoneNumber = editPhoneNumber.text.toString().trim()
+            val rawPhoneNumber = editPhoneNumber.text.toString().trim()
+            val phoneNumber = "+82" + rawPhoneNumber.removePrefix("0") // 한국 국가 코드 +82 추가 및 010의 0 제거
 
-            if (phoneNumber.isEmpty()) {
+            if (rawPhoneNumber.isEmpty()) {
                 Toast.makeText(this, "휴대폰 번호를 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            Log.d(TAG, "Attempting to send verification code for ID: $schoolId, Phone: $phoneNumber")
+            Log.d(TAG, "Attempting to send verification code for ID: $schoolId, Phone: $rawPhoneNumber (Firebase format: $phoneNumber)")
 
+            // DB에서 해당 학번의 전화번호를 먼저 검증
             CoroutineScope(Dispatchers.IO).launch {
                 val connection = MSSQLConnector.getConnection()
-                var message = ""
+                var dbCheckMessage = ""
+                var dbPhoneNumberMatched = false
+
                 if (connection != null) {
                     try {
-                        // DB에서 해당 학번의 전화번호 조회 (students_info 테이블)
                         val query = "SELECT phone_number FROM students_info WHERE student_school_id = ?"
                         val preparedStatement = connection.prepareStatement(query)
                         preparedStatement.setString(1, schoolId)
@@ -274,46 +293,38 @@ class SignupInfoActivity : AppCompatActivity() {
 
                         if (resultSet.next()) {
                             val dbPhoneNumber = resultSet.getString("phone_number")
-                            if (dbPhoneNumber == phoneNumber) {
-                                Log.d(TAG, "Phone number matched DB record. Sending code.")
-                                // 전화번호가 일치하면 인증번호 발송 로직 (여기에 실제 인증번호 발송 코드 추가)
-                                // TODO: generateAndSendVerificationCode(phoneNumber) 실제 인증번호 발송 로직 구현
-                                message = "인증번호가 발송되었습니다."
-                                isCodeSent = true // 인증번호 발송 성공
+                            // DB의 전화번호와 사용자 입력 전화번호를 비교 (DB에 하이픈이 있다면 제거하고 비교)
+                            if (dbPhoneNumber?.replace("-", "") == rawPhoneNumber.replace("-", "")) {
+                                dbPhoneNumberMatched = true
                             } else {
-                                Log.d(TAG, "Input phone number '$phoneNumber' does not match DB record '$dbPhoneNumber'.")
-                                message = "입력하신 휴대폰 번호가 학교 포털에 등록된 번호와 다릅니다."
-                                isCodeSent = false
+                                dbCheckMessage = "입력하신 휴대폰 번호가 학교 포털에 등록된 번호와 다릅니다."
                             }
                         } else {
-                            Log.d(TAG, "School ID '$schoolId' not found when checking phone number. (Should not happen if school verified)")
-                            message = "해당 학번에 등록된 정보가 없습니다."
-                            isCodeSent = false
+                            dbCheckMessage = "해당 학번에 등록된 정보가 없습니다."
                         }
                         resultSet.close()
                         preparedStatement.close()
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        Log.e(TAG, "Error sending verification code: ${e.message}")
-                        message = "인증번호 발송 중 오류가 발생했습니다: ${e.message}"
-                        isCodeSent = false
+                        dbCheckMessage = "전화번호 확인 중 DB 오류가 발생했습니다: ${e.message}"
                     } finally {
-                        try {
-                            connection.close()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                        try { connection.close() } catch (e: Exception) { e.printStackTrace() }
                     }
                 } else {
-                    Log.e(TAG, "Failed to connect to database for sending verification code.")
-                    message = "데이터베이스 연결에 실패했습니다."
-                    isCodeSent = false
+                    dbCheckMessage = "데이터베이스 연결에 실패했습니다."
                 }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@SignupInfoActivity, message, Toast.LENGTH_SHORT).show()
-                    updateVerifyButton()
-                    updateSignupButtonState()
+                    if (dbPhoneNumberMatched) {
+                        // DB 검증 성공 시 Firebase SMS 인증 시작
+                        Log.d(TAG, "DB phone number matched. Proceeding with Firebase phone authentication.")
+                        sendFirebaseVerificationCode(phoneNumber)
+                    } else {
+                        Toast.makeText(this@SignupInfoActivity, dbCheckMessage, Toast.LENGTH_SHORT).show()
+                        isCodeSent = false
+                        updateVerifyButton()
+                        updateSignupButtonState()
+                    }
                 }
             }
         }
@@ -332,21 +343,8 @@ class SignupInfoActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // TODO: 여기에 실제 인증번호 확인 로직 구현
-
-            // 예시: 서버로 인증번호를 보내서 확인하거나, 앱 내부에서 생성된 번호와 비교
-            val correctCode = "123456" // 예시: 실제로는 발송된 번호와 비교해야 함
-            Log.d(TAG, "Verifying code. Input: $verificationCode, Expected (mock): $correctCode")
-            if (verificationCode == correctCode) {
-                isPhoneVerified = true
-                Toast.makeText(this, "휴대폰 인증이 완료되었습니다.", Toast.LENGTH_SHORT).show()
-                Log.d(TAG, "Phone verification successful.")
-            } else {
-                isPhoneVerified = false
-                Toast.makeText(this, "인증번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show()
-                Log.d(TAG, "Phone verification failed: incorrect code.")
-            }
-            updateSignupButtonState()
+            Log.d(TAG, "Verifying code: $verificationCode")
+            verifyPhoneNumberWithCode(verificationCode)
         }
 
 
@@ -422,6 +420,87 @@ class SignupInfoActivity : AppCompatActivity() {
         }
     }
 
+    // Firebase Phone Authentication 관련 콜백 리스너
+    private val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+
+        override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+            // 자동 인증 성공 시 (SMS 자동 감지)
+            Log.d(TAG, "onVerificationCompleted: ${credential.smsCode}")
+            isCodeSent = true // 코드가 도착했으니 발송 상태로 간주 (재발송 버튼 비활성화)
+            editVerificationCode.setText(credential.smsCode) // 자동 채우기
+            // 바로 인증 시도 (수동 버튼 클릭 없이)
+            verifyPhoneNumberWithCode(credential.smsCode ?: "")
+        }
+
+        override fun onVerificationFailed(e: FirebaseException) {
+            // 인증 실패 (네트워크 문제, 잘못된 번호, 할당량 초과 등)
+            Log.e(TAG, "onVerificationFailed", e)
+            Toast.makeText(this@SignupInfoActivity, "휴대폰 인증 실패: ${e.message}", Toast.LENGTH_LONG).show()
+            isCodeSent = false
+            isPhoneVerified = false
+            updateVerifyButton()
+            updateSignupButtonState()
+        }
+
+        override fun onCodeSent(
+            verificationId: String,
+            token: PhoneAuthProvider.ForceResendingToken
+        ) {
+            // 인증번호가 성공적으로 발송되었을 때
+            Log.d(TAG, "onCodeSent: $verificationId")
+            this@SignupInfoActivity.verificationId = verificationId
+            this@SignupInfoActivity.resendToken = token
+            isCodeSent = true
+            Toast.makeText(this@SignupInfoActivity, "인증번호가 발송되었습니다.", Toast.LENGTH_SHORT).show()
+            updateVerifyButton() // 인증번호 발송 상태에 따라 인증 버튼 활성화
+        }
+    }
+
+    // Firebase를 사용하여 인증번호 발송 요청
+    private fun sendFirebaseVerificationCode(phoneNumber: String) {
+        val options = PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(phoneNumber) // 휴대폰 번호 (국가 코드 포함)
+            .setTimeout(60L, TimeUnit.SECONDS) // 타임아웃 시간 (초)
+            .setActivity(this) // 현재 액티비티
+            .setCallbacks(callbacks) // 콜백 리스너 설정
+            .build()
+        PhoneAuthProvider.verifyPhoneNumber(options)
+        Log.d(TAG, "Firebase verification code sent request for $phoneNumber")
+    }
+
+    // Firebase를 사용하여 인증번호 확인
+    private fun verifyPhoneNumberWithCode(code: String) {
+        val currentVerificationId = verificationId
+        if (currentVerificationId == null) {
+            Toast.makeText(this, "인증번호를 먼저 발송해주세요.", Toast.LENGTH_SHORT).show()
+            Log.w(TAG, "Verification ID is null when trying to verify code.")
+            return
+        }
+
+        val credential = PhoneAuthProvider.getCredential(currentVerificationId, code)
+        signInWithPhoneAuthCredential(credential)
+    }
+
+    // Firebase 자격 증명으로 로그인 시도
+    private fun signInWithPhoneAuthCredential(credential: PhoneAuthCredential) {
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    // 인증 성공
+                    Log.d(TAG, "signInWithCredential successful")
+                    Toast.makeText(this, "휴대폰 인증이 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                    isPhoneVerified = true
+                } else {
+                    // 인증 실패
+                    Log.e(TAG, "signInWithCredential failed", task.exception)
+                    Toast.makeText(this, "인증번호가 일치하지 않거나 오류가 발생했습니다.", Toast.LENGTH_LONG).show()
+                    isPhoneVerified = false
+                }
+                updateSignupButtonState() // 인증 결과에 따라 회원가입 버튼 상태 업데이트
+            }
+    }
+
+
     // 체크박스 처리 로직
     private fun handleCheckboxLogic(clicked: CheckBox) {
         if (clicked.id == R.id.cbAgreeAll) {
@@ -471,6 +550,7 @@ class SignupInfoActivity : AppCompatActivity() {
 
     // 인증 버튼 제어 (인증번호 발송 완료 & 인증번호 입력 기준)
     private fun updateVerifyButton() {
+        // Firebase 인증번호 발송 후 isCodeSent가 true가 되고, 인증번호 입력 필드에 내용이 있어야 활성화
         val verificationCodeFilled = editVerificationCode.text.toString().isNotEmpty()
         val enabled = isCodeSent && verificationCodeFilled
         btnVerify.isEnabled = enabled
