@@ -13,6 +13,7 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.location.network" android:required="false" />
 
+
     <application
         android:usesCleartextTraffic="true"
 
@@ -42,9 +43,12 @@
         <activity android:name=".Chat" android:label="Chat"/>
         <activity android:name=".Profile" android:label="Profile"/>
         <activity android:name=".SignupInfoActivity" />
-        <activity android:name=".MainActivity" android:label="Main"/>
-       <activity android:name=".util.SignupActivity" android:label="sign"/>
+        <activity android:name=".MainActivity" android:label="Main"/> 
+        <activity android:name=".util.SignupActivity" android:label="sign"/>
         <activity android:name=".ChangePasswordActivity" android:label="비밀번호 변경"/>
+        <activity android:name=".FindpwActivity" android:label="비밀번호 찾기"/>
+
+
 
 
    </application>

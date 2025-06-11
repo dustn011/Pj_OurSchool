@@ -10,20 +10,23 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="24dp"
+        android:padding="26dp"
         android:gravity="center_vertical"
-        android:background="#3557C8">
+        android:background="#3557C8"
+        >
 
         <ImageView
             android:layout_width="60dp"
             android:layout_height="match_parent"
-            android:src="@drawable/school" />
+            android:src="@drawable/school"
+            />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="우리 학교는 ?"
+            android:textStyle="bold"
             android:textSize="30sp"
             android:gravity="center"
             android:textColor="#FFFFFF"/>

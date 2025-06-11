@@ -7,7 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.pj_ourschool.databinding.ActivityLoginBinding
-import com.example.pj_ourschool.util.SignupActivity
+import com.example.pj_ourschool.util.SignupActivity // SignupActivity 경로 확인
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,15 +18,12 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private val USER_INFO_PREF = "user_info"
-    // private val KEY_USER_ID = "userId" // 이 부분을 companion object 안으로 이동
-    // private val KEY_USER_PASSWORD = "userPassword" // 이 부분을 companion object 안으로 이동
-    // private val KEY_AUTO_LOGIN = "autoLogin" // 이 부분을 companion object 안으로 이동
 
     // 다른 클래스에서 접근할 수 있도록 companion object 안에 정의합니다.
     // const val을 사용하여 컴파일 시점에 결정되는 상수로 만듭니다.
     companion object {
         const val EXTRA_LOGGED_IN_USER_ID = "loggedInUserId"
-        const val KEY_USER_ID = "userId" // 이제 LoginActivity.KEY_USER_ID 로 접근 가능
+        const val KEY_USER_ID = "userId"
         const val KEY_USER_PASSWORD = "userPassword" // 보안상 위험, 실제 서비스에서는 사용 금지!
         const val KEY_AUTO_LOGIN = "autoLogin"
     }
@@ -39,11 +36,9 @@ class LoginActivity : AppCompatActivity() {
 
         val sharedPref = getSharedPreferences(USER_INFO_PREF, Context.MODE_PRIVATE)
 
-        // LoginActivity.KEY_USER_ID를 통해 접근합니다.
         val savedUserId = sharedPref.getString(LoginActivity.KEY_USER_ID, "")
         binding.etId.setText(savedUserId)
 
-        // LoginActivity.KEY_AUTO_LOGIN을 통해 접근합니다.
         val isAutoLoginEnabled = sharedPref.getBoolean(LoginActivity.KEY_AUTO_LOGIN, false)
         binding.cbAutoLogin.isChecked = isAutoLoginEnabled
 
@@ -59,14 +54,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         binding.tvRegister.setOnClickListener {
-            Toast.makeText(this, "회원가입 화면으로 이동합니다.", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, SignupActivity::class.java))
         }
 
+        // --- 비밀번호 찾기 클릭 이벤트 추가 ---
         binding.tvFindIdPw.setOnClickListener {
-            Toast.makeText(this, "아이디/비밀번호 찾기 화면으로 이동합니다.", Toast.LENGTH_SHORT).show()
-            // startActivity(Intent(this, FindIdPwActivity::class.java))
+            startActivity(Intent(this, FindpwActivity::class.java)) // FindpwActivity로 이동
         }
+        // --- 여기까지 추가 ---
     }
 
     private fun attemptLogin(userId: String, password: String, isAutoLogin: Boolean) {
@@ -103,20 +98,18 @@ class LoginActivity : AppCompatActivity() {
                         if (passwordCorrect) {
                             val sharedPref = getSharedPreferences(USER_INFO_PREF, Context.MODE_PRIVATE)
                             val editor = sharedPref.edit()
-                            editor.putString(LoginActivity.KEY_USER_ID, userId) // LoginActivity.KEY_USER_ID로 접근
+                            editor.putString(LoginActivity.KEY_USER_ID, userId)
 
                             val autoLoginChecked = binding.cbAutoLogin.isChecked
-                            editor.putBoolean(LoginActivity.KEY_AUTO_LOGIN, autoLoginChecked) // LoginActivity.KEY_AUTO_LOGIN로 접근
+                            editor.putBoolean(LoginActivity.KEY_AUTO_LOGIN, autoLoginChecked)
 
                             if (autoLoginChecked) {
-                                editor.putString(LoginActivity.KEY_USER_PASSWORD, password) // LoginActivity.KEY_USER_PASSWORD로 접근
+                                editor.putString(LoginActivity.KEY_USER_PASSWORD, password)
                             } else {
-                                editor.remove(LoginActivity.KEY_USER_PASSWORD) // LoginActivity.KEY_USER_PASSWORD로 접근
+                                editor.remove(LoginActivity.KEY_USER_PASSWORD)
                             }
                             editor.apply()
 
-                            val successMessage = "${userId}님, 환영합니다!"
-                            Toast.makeText(this@LoginActivity, successMessage, Toast.LENGTH_SHORT).show()
 
                             val intent = Intent(this@LoginActivity, MainActivity::class.java)
                             intent.putExtra(EXTRA_LOGGED_IN_USER_ID, userId)

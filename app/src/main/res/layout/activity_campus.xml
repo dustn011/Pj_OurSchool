@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="24dp"
+        android:padding="26dp"
         android:gravity="center_vertical"
         android:background="#3557C8">
 
@@ -24,10 +24,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="캠퍼스 맵"
-            android:textSize="30sp"
             android:gravity="center"
-            android:textColor="#FFFFFF"/>
+            android:text="캠퍼스 맵"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:textStyle="bold" />
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/Profile"
