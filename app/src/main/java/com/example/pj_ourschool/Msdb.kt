@@ -7,7 +7,7 @@ import java.sql.DriverManager
 
 
 object MSSQLConnector {
-    private const val URL = "jdbc:jtds:sqlserver://111.118.91.48;databaseName=DB"
+    private const val URL = "jdbc:jtds:sqlserver://210.124.147.183;databaseName=DB"
     private const val USER = "엉구"
     private const val PASSWORD = "1234"
 

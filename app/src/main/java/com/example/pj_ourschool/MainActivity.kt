@@ -51,11 +51,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chatImageView: ImageView
     private lateinit var profileImageView: CircleImageView
     private lateinit var plusScreen1: LinearLayout
-    private lateinit var plusScreen2: LinearLayout
+    private lateinit var plusScreen2: LinearLayout // 오늘의 수업 섹션
     private lateinit var plusScreen3: CardView
     private lateinit var plusScreen1TextView: TextView
     private lateinit var weatherImageView: ImageView
     private lateinit var todayScheduleTextView: TextView
+    private lateinit var homepageWj: LinearLayout
+    private lateinit var shceduleWj: LinearLayout
+    private lateinit var infoWj: LinearLayout
+    private lateinit var edelweisWj: LinearLayout // ID 변경 요청 반영
+    private lateinit var portalWj: LinearLayout
 
     private val PROFILE_IMAGE_PREF = "profile_image_pref"
     private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
@@ -71,23 +76,37 @@ class MainActivity : AppCompatActivity() {
         profileImageView = findViewById(R.id.Profile)
 
         plusScreen1 = findViewById(R.id.plusScreen1)
-        plusScreen2 = findViewById(R.id.plusScreen2)
+        plusScreen2 = findViewById(R.id.plusScreen2) // ID 연결
         plusScreen3 = findViewById(R.id.plusScreen3)
 
         weatherImageView = findViewById(R.id.weatherImageView)
         plusScreen1TextView = findViewById(R.id.plusScreen1TextView)
         todayScheduleTextView = findViewById(R.id.todayScheduleTextView)
+        homepageWj = findViewById(R.id.homepage_wj)
+        shceduleWj = findViewById(R.id.shcedule_wj)
+        infoWj = findViewById(R.id.info_wj)
+        edelweisWj = findViewById(R.id.edelweis_wj)
+        portalWj = findViewById(R.id.portal_wj)
 
         loadProfileImageUri()
 
+        // 1. 프로필 이미지 클릭 리스너
         profileImageView.setOnClickListener {
             val intent = Intent(this, Profile::class.java)
             startActivity(intent)
         }
+        // 2. 하단 메뉴 클릭 리스너 (시간표)
         timeImageView.setOnClickListener {
             val intent = Intent(this, Time::class.java)
             startActivity(intent)
         }
+        // 3. 오늘의 수업 섹션 클릭 리스너 (추가된 부분)
+        plusScreen2.setOnClickListener {
+            Log.d("MainActivity", "오늘의 수업 (plusScreen2) 클릭: Time Activity로 이동")
+            val intent = Intent(this, Time::class.java)
+            startActivity(intent)
+        }
+        // 4. 하단 메뉴 클릭 리스너 (캠퍼스맵, 셔틀버스, 채팅)
         campusImageView.setOnClickListener {
             val intent = Intent(this, Campus::class.java)
             startActivity(intent)
@@ -100,6 +119,58 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, Chat::class.java)
             startActivity(intent)
         }
+        // 5. 홈페이지 위젯 클릭 리스너 (새로 추가된 부분)
+        homepageWj.setOnClickListener {
+            Log.d("MainActivity", "홈페이지 위젯 클릭: 청주대학교 홈페이지로 이동")
+
+            // 이동할 URL
+            val url = "https://www.cju.ac.kr/www/index.do"
+
+            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
+
+        // 6. 학사일정 위젯 클릭 리스너 (새로 추가된 부분)
+        shceduleWj.setOnClickListener {
+            Log.d("MainActivity", "학사일정 위젯 클릭: 학사일정 페이지로 이동")
+
+            // 이동할 URL
+            val url = "https://www.cju.ac.kr/www/selectTnSchafsSchdulListUS.do?key=4498"
+
+            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
+
+        // 7. 학사공지 위젯 클릭 리스너 (새로 추가된 부분)
+        infoWj.setOnClickListener {
+            Log.d("MainActivity", "학사공지 위젯 클릭: 학사공지 페이지로 이동")
+
+            // 이동할 URL
+            val url = "https://cju.ac.kr/www/selectBbsNttList.do?key=4577&bbsNo=881&integrDeptCode=&searchCtgry="
+
+            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
+
+        // 8. 에델바이스 위젯 클릭 리스너
+        edelweisWj.setOnClickListener {
+            Log.d("MainActivity", "에델바이스 위젯 클릭: HIVE로 이동")
+            val url = "https://hive.cju.ac.kr/common/greeting.do"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
+
+        // 9. 포털시스템 위젯 클릭 리스너
+        portalWj.setOnClickListener {
+            Log.d("MainActivity", "포털시스템 위젯 클릭: 포털시스템으로 이동")
+            val url = "https://portal.cju.ac.kr"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        }
+
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -241,6 +312,7 @@ class MainActivity : AppCompatActivity() {
     private suspend fun fetchTodayTimetableFromMSSQL(): List<Map<String, String?>> =
         withContext(Dispatchers.IO) {
             val resultList = mutableListOf<Map<String, String?>>()
+            // 주의: MSSQLConnector는 외부 연결 정보에 의존합니다.
             val connection = MSSQLConnector.getConnection()
             val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
             val userId = sharedPref.getString("userId", "")
@@ -339,8 +411,9 @@ class MainActivity : AppCompatActivity() {
                         if (times.isNotEmpty()) {
                             val startBlock = times.first()
                             val endBlock = times.last()
+                            // 학교 시간표 블록 정의에 따라 8교시(1)는 9시부터 시작한다고 가정하고 8+블록으로 계산
                             val startHour = 8 + startBlock
-                            val endHour = 8 + endBlock + 1 // 수업 블록이 1시간이라고 가정
+                            val endHour = 8 + endBlock + 1 // 수업 블록이 1시간이라고 가정하고, 끝 블록 다음 시간의 시작 시간
 
                             // 현재 시간과 비교하여 이미 지난 수업은 제외
                             // 수업 종료 시간 (분은 00분으로 가정)
@@ -392,6 +465,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+// Weather API 인터페이스와 데이터 클래스는 변경 없음
 interface WeatherApiService {
     @GET("data/2.5/weather")
     fun getWeather(
