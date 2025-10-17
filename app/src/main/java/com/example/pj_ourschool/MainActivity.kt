@@ -21,7 +21,9 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import de.hdodenhof.circleimageview.CircleImageView
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Callback
@@ -36,8 +38,10 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+
+// ShuttleData.kt 파일에서 정의된 클래스와 객체를 import 합니다.
+import com.example.pj_ourschool.Shuttle
+import com.example.pj_ourschool.ShuttleService
 
 
 class MainActivity : AppCompatActivity() {
@@ -45,40 +49,53 @@ class MainActivity : AppCompatActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
+    // UI 요소 변수
     private lateinit var timeImageView: ImageView
     private lateinit var campusImageView: ImageView
     private lateinit var busImageView: ImageView
     private lateinit var chatImageView: ImageView
     private lateinit var profileImageView: CircleImageView
     private lateinit var plusScreen1: LinearLayout
-    private lateinit var plusScreen2: LinearLayout // 오늘의 수업 섹션
-    private lateinit var plusScreen3: CardView
+    private lateinit var plusScreen2: LinearLayout
+    private lateinit var plusScreen3: LinearLayout
     private lateinit var plusScreen1TextView: TextView
     private lateinit var weatherImageView: ImageView
     private lateinit var todayScheduleTextView: TextView
     private lateinit var homepageWj: LinearLayout
     private lateinit var shceduleWj: LinearLayout
     private lateinit var infoWj: LinearLayout
-    private lateinit var edelweisWj: LinearLayout // ID 변경 요청 반영
+    private lateinit var edelweisWj: LinearLayout
     private lateinit var portalWj: LinearLayout
+
+    // 셔틀 위젯 관련 변수
+    // shuttle_next_time_text ID를 가져와 현재 위치 표시용으로 사용합니다.
+    private lateinit var shuttleCurrentLocationText: TextView
+    private var shuttleUpdateHandler: Handler? = null
+    private var shuttleUpdateRunnable: Runnable? = null
+    private val SHUTTLE_UPDATE_INTERVAL_MS = 15000L // 15초마다 업데이트
 
     private val PROFILE_IMAGE_PREF = "profile_image_pref"
     private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
+
+    // 셔틀 위치 계산에 사용되는 상수
+    private val STATIONARY_DURATION_SECONDS = 60L
+    private val STATION_ORDER_DOWN = listOf("정문", "중문", "보건의료대학", "학생회관", "예술대학", "기숙사")
+    private val STATION_ORDER_UP = listOf("기숙사", "예술대학", "학생회관", "보건의료대학", "중문", "정문")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // UI 요소 초기화
         timeImageView = findViewById(R.id.time)
         campusImageView = findViewById(R.id.campus)
         busImageView = findViewById(R.id.bus)
         chatImageView = findViewById(R.id.chat)
         profileImageView = findViewById(R.id.Profile)
-
         plusScreen1 = findViewById(R.id.plusScreen1)
-        plusScreen2 = findViewById(R.id.plusScreen2) // ID 연결
+        plusScreen2 = findViewById(R.id.plusScreen2)
         plusScreen3 = findViewById(R.id.plusScreen3)
-
         weatherImageView = findViewById(R.id.weatherImageView)
         plusScreen1TextView = findViewById(R.id.plusScreen1TextView)
         todayScheduleTextView = findViewById(R.id.todayScheduleTextView)
@@ -88,90 +105,30 @@ class MainActivity : AppCompatActivity() {
         edelweisWj = findViewById(R.id.edelweis_wj)
         portalWj = findViewById(R.id.portal_wj)
 
+        // 셔틀 위젯 TextView 초기화
+        // XML에서 shuttle_next_time_text가 유일한 TextView로 수정되었으므로, 해당 ID를 사용합니다.
+        shuttleCurrentLocationText = findViewById(R.id.shuttle_next_time_text)
+
+
         loadProfileImageUri()
 
-        // 1. 프로필 이미지 클릭 리스너
-        profileImageView.setOnClickListener {
-            val intent = Intent(this, Profile::class.java)
-            startActivity(intent)
-        }
-        // 2. 하단 메뉴 클릭 리스너 (시간표)
-        timeImageView.setOnClickListener {
-            val intent = Intent(this, Time::class.java)
-            startActivity(intent)
-        }
-        // 3. 오늘의 수업 섹션 클릭 리스너 (추가된 부분)
-        plusScreen2.setOnClickListener {
-            Log.d("MainActivity", "오늘의 수업 (plusScreen2) 클릭: Time Activity로 이동")
-            val intent = Intent(this, Time::class.java)
-            startActivity(intent)
-        }
-        // 4. 하단 메뉴 클릭 리스너 (캠퍼스맵, 셔틀버스, 채팅)
-        campusImageView.setOnClickListener {
-            val intent = Intent(this, Campus::class.java)
-            startActivity(intent)
-        }
-        busImageView.setOnClickListener {
-            val intent = Intent(this, ShuttleBus::class.java)
-            startActivity(intent)
-        }
-        chatImageView.setOnClickListener {
-            val intent = Intent(this, Chat::class.java)
-            startActivity(intent)
-        }
-        // 5. 홈페이지 위젯 클릭 리스너 (새로 추가된 부분)
-        homepageWj.setOnClickListener {
-            Log.d("MainActivity", "홈페이지 위젯 클릭: 청주대학교 홈페이지로 이동")
+        // --- 클릭 리스너 설정 ---
+        profileImageView.setOnClickListener { startActivity(Intent(this, Profile::class.java)) }
+        timeImageView.setOnClickListener { startActivity(Intent(this, Time::class.java)) }
+        plusScreen2.setOnClickListener { startActivity(Intent(this, Time::class.java)) }
+        campusImageView.setOnClickListener { startActivity(Intent(this, Campus::class.java)) }
+        busImageView.setOnClickListener { startActivity(Intent(this, ShuttleBus::class.java)) }
+        chatImageView.setOnClickListener { startActivity(Intent(this, Chat::class.java)) }
+        plusScreen3.setOnClickListener { startActivity(Intent(this, ShuttleBus::class.java)) }
 
-            // 이동할 URL
-            val url = "https://www.cju.ac.kr/www/index.do"
+        // 위젯 클릭 리스너 (URL 이동)
+        homepageWj.setOnClickListener { openUrl("https://www.cju.ac.kr/www/index.do") }
+        shceduleWj.setOnClickListener { openUrl("https://www.cju.ac.kr/www/selectTnSchafsSchdulListUS.do?key=4498") }
+        infoWj.setOnClickListener { openUrl("https://cju.ac.kr/www/selectBbsNttList.do?key=4577&bbsNo=881&integrDeptCode=&searchCtgry=") }
+        edelweisWj.setOnClickListener { openUrl("https://hive.cju.ac.kr/common/greeting.do") }
+        portalWj.setOnClickListener { openUrl("https://portal.cju.ac.kr") }
 
-            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
-
-        // 6. 학사일정 위젯 클릭 리스너 (새로 추가된 부분)
-        shceduleWj.setOnClickListener {
-            Log.d("MainActivity", "학사일정 위젯 클릭: 학사일정 페이지로 이동")
-
-            // 이동할 URL
-            val url = "https://www.cju.ac.kr/www/selectTnSchafsSchdulListUS.do?key=4498"
-
-            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
-
-        // 7. 학사공지 위젯 클릭 리스너 (새로 추가된 부분)
-        infoWj.setOnClickListener {
-            Log.d("MainActivity", "학사공지 위젯 클릭: 학사공지 페이지로 이동")
-
-            // 이동할 URL
-            val url = "https://cju.ac.kr/www/selectBbsNttList.do?key=4577&bbsNo=881&integrDeptCode=&searchCtgry="
-
-            // ACTION_VIEW를 사용하여 웹 브라우저를 엽니다.
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
-
-        // 8. 에델바이스 위젯 클릭 리스너
-        edelweisWj.setOnClickListener {
-            Log.d("MainActivity", "에델바이스 위젯 클릭: HIVE로 이동")
-            val url = "https://hive.cju.ac.kr/common/greeting.do"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
-
-        // 9. 포털시스템 위젯 클릭 리스너
-        portalWj.setOnClickListener {
-            Log.d("MainActivity", "포털시스템 위젯 클릭: 포털시스템으로 이동")
-            val url = "https://portal.cju.ac.kr"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        }
-
-
+        // 날씨 정보 및 시간표 로드
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
@@ -185,10 +142,307 @@ class MainActivity : AppCompatActivity() {
         loadTodayTimetable()
     }
 
+    private fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        startActivity(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // 액티비티가 시작되면 셔틀 업데이트를 시작합니다.
+        startPeriodicShuttleUpdate()
+    }
+
     override fun onResume() {
         super.onResume()
         loadProfileImageUri()
     }
+
+    override fun onStop() {
+        super.onStop()
+        // 액티비티가 중단되면 업데이트를 중지합니다.
+        shuttleUpdateHandler?.removeCallbacksAndMessages(null)
+        shuttleUpdateHandler = null
+        shuttleUpdateRunnable = null
+    }
+
+    // =================================================================
+    // 셔틀 위젯 관련 함수 (수정된 부분)
+    // =================================================================
+
+    private fun startPeriodicShuttleUpdate() {
+        shuttleUpdateHandler = Handler(Looper.getMainLooper())
+        shuttleUpdateRunnable = object : Runnable {
+            override fun run() {
+                updateShuttleWidget()
+                shuttleUpdateHandler?.postDelayed(this, SHUTTLE_UPDATE_INTERVAL_MS)
+            }
+        }
+        shuttleUpdateHandler?.post(shuttleUpdateRunnable!!)
+    }
+
+    private fun updateShuttleWidget() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val allShuttles = ShuttleService.getShuttleSchedulesFromDb()
+
+            val currentTimeMillis = Calendar.getInstance().timeInMillis
+            val currentCalendar = Calendar.getInstance()
+
+            // 현재 운행 중이거나 다음 예정인 셔틀을 찾습니다.
+            val bestFrontShuttle = findBestShuttle(
+                allShuttles.filter { it.departureStation == "정문" },
+                currentTimeMillis,
+                currentCalendar
+            )
+            val bestDormShuttle = findBestShuttle(
+                allShuttles.filter { it.departureStation == "기숙사" },
+                currentTimeMillis,
+                currentCalendar
+            )
+
+            // UI 업데이트
+            updateShuttleTexts(bestFrontShuttle, bestDormShuttle)
+        }
+    }
+
+    /**
+     * 주어진 셔틀 리스트에서 현재 시간에 가장 적합한 셔틀(현재 운행 중이거나, 가장 가까운 미래 출발 셔틀)을 찾습니다.
+     */
+    private fun findBestShuttle(
+        shuttles: List<Shuttle>,
+        currentTimeMillis: Long,
+        currentCalendar: Calendar
+    ): Shuttle? {
+        // 1. 현재 운행 중인 셔틀을 우선적으로 찾습니다.
+        var operatingShuttle: Shuttle? = null
+        var operatingShuttleDepartureTime: Long = -1L
+
+        for (shuttle in shuttles) {
+            if (ShuttleService.isShuttleCanceledToday(shuttle)) {
+                continue
+            }
+
+            val timeParts = shuttle.departureTime.split(":")
+            val hour = timeParts[0].toIntOrNull() ?: continue
+            val minute = timeParts[1].toIntOrNull() ?: continue
+
+            val departureCal = currentCalendar.clone() as Calendar
+            departureCal.set(Calendar.HOUR_OF_DAY, hour)
+            departureCal.set(Calendar.MINUTE, minute)
+            departureCal.set(Calendar.SECOND, 0)
+            departureCal.set(Calendar.MILLISECOND, 0)
+            val departureMillis = departureCal.timeInMillis
+
+            val route = if (shuttle.departureStation == "기숙사") STATION_ORDER_UP else STATION_ORDER_DOWN
+
+            // 정류장 수 (6) * 정차 시간 (60초) + 중간 지점 수 (5) * 정차 시간 (60초)
+            val stationStops = route.size.toLong() * STATIONARY_DURATION_SECONDS
+            val midPointStops = maxOf(0, route.size - 1).toLong() * STATIONARY_DURATION_SECONDS
+
+            // 셔틀이 종점 정차를 시작하는 시점까지의 총 누적 시간 (600초)
+            val totalAccumulatedTimeSeconds = stationStops + midPointStops
+
+            // 총 예상 운행 종료 시간 (마지막 정류장 정차 시간을 마치는 시점)
+            // totalAccumulatedTimeSeconds (종점 정차 시작 시간) + STATIONARY_DURATION_SECONDS (종점 정차 시간)
+            val estimatedEndTimeMillis = departureMillis + (totalAccumulatedTimeSeconds * 1000L)
+
+            // (선택 사항: ShutterBus의 로직과 완벽히 일치시키려면 + 1초를 추가하여 오차 방지)
+            val estimatedEndTimeMillisWithSafety = estimatedEndTimeMillis + 1000L
+
+            if (currentTimeMillis >= departureMillis && currentTimeMillis < estimatedEndTimeMillis) {
+                if (operatingShuttle == null || departureMillis > operatingShuttleDepartureTime) {
+                    operatingShuttle = shuttle
+                    operatingShuttleDepartureTime = departureMillis
+                }
+            }
+        }
+
+        if (operatingShuttle != null) {
+            return operatingShuttle
+        }
+
+        // 2. 운행 중인 셔틀이 없다면, 가장 빠른 출발 예정 셔틀을 찾습니다.
+        var nextUpcomingShuttle: Shuttle? = null
+        var minTimeDiffMillis: Long = Long.MAX_VALUE
+
+        for (shuttle in shuttles) {
+            if (ShuttleService.isShuttleCanceledToday(shuttle)) {
+                continue
+            }
+
+            val timeParts = shuttle.departureTime.split(":")
+            val hour = timeParts[0].toIntOrNull() ?: continue
+            val minute = timeParts[1].toIntOrNull() ?: continue
+
+            val departureCal = currentCalendar.clone() as Calendar
+            departureCal.set(Calendar.HOUR_OF_DAY, hour)
+            departureCal.set(Calendar.MINUTE, minute)
+            departureCal.set(Calendar.SECOND, 0)
+            departureCal.set(Calendar.MILLISECOND, 0)
+            val departureMillis = departureCal.timeInMillis
+
+            if (departureMillis > currentTimeMillis) {
+                val timeDiff = departureMillis - currentTimeMillis
+                if (timeDiff < minTimeDiffMillis) {
+                    minTimeDiffMillis = timeDiff
+                    nextUpcomingShuttle = shuttle
+                }
+            }
+        }
+        return nextUpcomingShuttle
+    }
+
+    /**
+     * 셔틀 위젯의 텍스트를 업데이트합니다. (현재 위치/도착 정보만 사용)
+     */
+    private fun updateShuttleTexts(
+        bestFrontShuttle: Shuttle?,
+        bestDormShuttle: Shuttle?
+    ) {
+        val currentCalendar = Calendar.getInstance()
+        val currentTimeMillis = currentCalendar.timeInMillis
+
+        // --- 현재 위치/상태 텍스트 설정 (shuttle_current_location_text) ---
+        val locationSb = StringBuilder()
+
+        // 셔틀 1 (정문 출발)
+        val frontLocation = calculateShuttleNextArrival(bestFrontShuttle, currentTimeMillis, currentCalendar, STATION_ORDER_DOWN, "정문")
+        locationSb.append("셔틀 1 | $frontLocation\n")
+
+        // 셔틀 2 (기숙사 출발)
+        val dormLocation = calculateShuttleNextArrival(bestDormShuttle, currentTimeMillis, currentCalendar, STATION_ORDER_UP, "기숙사")
+        locationSb.append("셔틀 2 | $dormLocation")
+
+        shuttleCurrentLocationText.text = locationSb.toString()
+    }
+
+    private fun isShuttleCurrentlyOperating(shuttle: Shuttle, currentTimeMillis: Long, currentCalendar: Calendar): Boolean {
+        val route = if (shuttle.departureStation == "기숙사") STATION_ORDER_UP else STATION_ORDER_DOWN
+        val totalRouteDurationSeconds = (route.size * STATIONARY_DURATION_SECONDS) + (maxOf(0, route.size - 1) * 0L)
+
+        val timeParts = shuttle.departureTime.split(":")
+        val hour = timeParts[0].toIntOrNull() ?: return false
+        val minute = timeParts[1].toIntOrNull() ?: return false
+
+        val departureCal = currentCalendar.clone() as Calendar
+        departureCal.set(Calendar.HOUR_OF_DAY, hour)
+        departureCal.set(Calendar.MINUTE, minute)
+        departureCal.set(Calendar.SECOND, 0)
+        departureCal.set(Calendar.MILLISECOND, 0)
+        val departureMillis = departureCal.timeInMillis
+
+        // 총 운행 시간 (마지막 정차 시간까지)
+        val estimatedEndTimeMillis = departureMillis + (totalRouteDurationSeconds + STATIONARY_DURATION_SECONDS) * 1000L
+
+        return currentTimeMillis >= departureMillis && currentTimeMillis < estimatedEndTimeMillis
+    }
+
+    /**
+     * 셔틀의 다음 도착 예정지 및 남은 시간을 계산하여 문자열로 반환합니다.
+     */
+    private fun calculateShuttleNextArrival(
+        shuttle: Shuttle?,
+        currentTimeMillis: Long,
+        currentCalendar: Calendar,
+        route: List<String>,
+        departureStationName: String // "정문" 또는 "기숙사"
+    ): String {
+        if (shuttle == null || ShuttleService.isShuttleCanceledToday(shuttle)) {
+            // 운행 예정이 없는 경우 (findBestShuttle이 null 반환)
+            return "운행 정보 없음"
+        }
+
+        val timeParts = shuttle.departureTime.split(":")
+        val hour = timeParts[0].toIntOrNull() ?: return "오류 발생"
+        val minute = timeParts[1].toIntOrNull() ?: return "오류 발생"
+
+        val departureCal = currentCalendar.clone() as Calendar
+        departureCal.set(Calendar.HOUR_OF_DAY, hour)
+        departureCal.set(Calendar.MINUTE, minute)
+        departureCal.set(Calendar.SECOND, 0)
+        departureCal.set(Calendar.MILLISECOND, 0)
+        val departureMillis = departureCal.timeInMillis
+
+        // 1. 아직 출발하지 않은 경우
+        if (currentTimeMillis < departureMillis) {
+            val timeUntilDepartureSec = (departureMillis - currentTimeMillis) / 1000L
+            val remainingMin = maxOf(1L, timeUntilDepartureSec / 60)
+
+            // 다음 출발 예정 시간도 함께 표시합니다.
+            return "${shuttle.departureTime} 출발 예정 (${remainingMin}분 후 출발)"
+        }
+
+        // 2. 운행 중인 셔틀의 경우
+        val elapsedSecondsFromDeparture = (currentTimeMillis - departureMillis) / 1000L
+        var accumulatedSegmentTime = 0L // 출발 후 누적된 시간 (초)
+        val segmentDuration = STATIONARY_DURATION_SECONDS // 정류장 또는 중간 지점 정차 시간 (60초)
+
+        // 총 운행 시간 계산 (마지막 정차 시간까지)
+        // (정류장 수 * 60초) + (중간 지점 수 * 60초) = (route.size * 60) + ((route.size - 1) * 60)
+        val totalRouteDurationSeconds = (route.size.toLong() * STATIONARY_DURATION_SECONDS) +
+                (maxOf(0, route.size - 1).toLong() * STATIONARY_DURATION_SECONDS)
+
+        // 운행 종료된 셔틀
+        if (elapsedSecondsFromDeparture >= totalRouteDurationSeconds) {
+            return "운행 종료"
+        }
+
+        // --- 위치 및 다음 도착 시간 계산 ---
+        for (i in route.indices) {
+            val currentStation = route[i]
+
+            // A. 정류장 정차 구간
+            val stopAtStationStartTime = accumulatedSegmentTime
+            val stopAtStationEndTime = stopAtStationStartTime + segmentDuration
+
+            if (elapsedSecondsFromDeparture < stopAtStationEndTime) {
+                // 현재 이 정류장에 정차 중이거나 이 정류장으로 이동 중인 경우 (이동 시간 0초 가정)
+                val nextStopName = if (i < route.size - 1) route[i + 1] else "(종점)"
+                val remainingSeconds = stopAtStationEndTime - elapsedSecondsFromDeparture
+                val remainingMin = maxOf(1L, (remainingSeconds / 60))
+
+                return if (i < route.size - 1) {
+                    // 다음 도착 시간 (다음 중간 지점 정차 시작 시간)
+                    val nextSegmentStartTime = stopAtStationEndTime + segmentDuration // 다음 중간 지점 정차 시작 시간
+                    val nextArrivalSeconds = nextSegmentStartTime - elapsedSecondsFromDeparture
+                    val nextArrivalMin = maxOf(1L, (nextArrivalSeconds / 60))
+
+                    "${currentStation} 정차 중 (${nextArrivalMin}분 후 ${nextStopName} 방면으로 출발)"
+
+                } else {
+                    // 종점 정차 중
+                    "${currentStation} 정차 중 (종점)"
+                }
+            }
+            accumulatedSegmentTime = stopAtStationEndTime
+
+            // B. 중간 지점 정차 구간 (다음 정류장으로 이동)
+            if (i < route.size - 1) {
+                val nextStation = route[i + 1]
+
+                val stopAtMidPointStartTime = accumulatedSegmentTime
+                val stopAtMidPointEndTime = stopAtMidPointStartTime + segmentDuration
+
+                if (elapsedSecondsFromDeparture < stopAtMidPointEndTime) {
+                    // 현재 중간 지점에 정차 중인 경우 (이동 시간 0초 가정)
+                    // 다음 도착 예정 시간 (다음 정류장 정차 시작 시간)
+                    val nextSegmentStartTime = stopAtMidPointEndTime + segmentDuration
+                    val nextArrivalSeconds = nextSegmentStartTime - elapsedSecondsFromDeparture
+                    val nextArrivalMin = maxOf(1L, (nextArrivalSeconds / 60))
+
+                    return "${currentStation} → ${nextStation} 중간 지점 정차 중 (${nextArrivalMin}분 후 ${nextStation} 도착)"
+                }
+                accumulatedSegmentTime = stopAtMidPointEndTime
+            }
+        }
+
+        return "운행 중 (위치 계산 오류)"
+    }
+
+
+    // =================================================================
+    // 기존 로직 (날씨, 시간표, 권한 등)
+    // =================================================================
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -312,8 +566,8 @@ class MainActivity : AppCompatActivity() {
     private suspend fun fetchTodayTimetableFromMSSQL(): List<Map<String, String?>> =
         withContext(Dispatchers.IO) {
             val resultList = mutableListOf<Map<String, String?>>()
-            // 주의: MSSQLConnector는 외부 연결 정보에 의존합니다.
-            val connection = MSSQLConnector.getConnection()
+            // MSSQLConnector는 외부 연결 정보에 의존합니다.
+            val connection: Connection? = MSSQLConnector.getConnection()
             val sharedPref = getSharedPreferences("user_info", Context.MODE_PRIVATE)
             val userId = sharedPref.getString("userId", "")
 
@@ -379,15 +633,12 @@ class MainActivity : AppCompatActivity() {
         }
 
     private fun updateTodayScheduleUI(todayScheduleData: List<Map<String, String?>>) {
-        // 날짜와 요일 표시
         val currentDateFormat = SimpleDateFormat("M월 d일 (E)", Locale.KOREA)
         val currentDateAndDay = currentDateFormat.format(Date())
         val stringBuilder = StringBuilder()
         stringBuilder.append("$currentDateAndDay\n")
 
-        Log.d("ScheduleDebug", "Date and Day added to StringBuilder: '$currentDateAndDay'")
-
-        val classList = mutableListOf<Triple<Int, Int, String>>() // Triple로 시작 시간, 끝 시간, 수업 정보 저장
+        val classList = mutableListOf<Triple<Int, Int, String>>()
 
         val scheduleEntryPattern = Regex("([월화수목금])\\(((\\d+)(,\\d+)*)\\)")
         val currentDayChar = SimpleDateFormat("E", Locale.KOREA).format(Date()).first()
@@ -395,7 +646,6 @@ class MainActivity : AppCompatActivity() {
         val currentMinute = Calendar.getInstance().get(Calendar.MINUTE)
 
         if (todayScheduleData.isNotEmpty()) {
-            Log.d("ScheduleDebug", "todayScheduleData is NOT empty. Attempting to parse schedule.")
             for (result in todayScheduleData) {
                 val className = result["class_name"] as? String ?: continue
                 val classSchedule = result["class_schedule"] as? String ?: ""
@@ -411,21 +661,15 @@ class MainActivity : AppCompatActivity() {
                         if (times.isNotEmpty()) {
                             val startBlock = times.first()
                             val endBlock = times.last()
-                            // 학교 시간표 블록 정의에 따라 8교시(1)는 9시부터 시작한다고 가정하고 8+블록으로 계산
                             val startHour = 8 + startBlock
-                            val endHour = 8 + endBlock + 1 // 수업 블록이 1시간이라고 가정하고, 끝 블록 다음 시간의 시작 시간
+                            val endHour = 8 + endBlock + 1
 
-                            // 현재 시간과 비교하여 이미 지난 수업은 제외
-                            // 수업 종료 시간 (분은 00분으로 가정)
                             val classEndTimeInMinutes = endHour * 60 + 0
                             val currentTimeInMinutes = currentHour * 60 + currentMinute
 
                             if (currentTimeInMinutes < classEndTimeInMinutes) {
                                 val formattedTime = String.format(Locale.getDefault(), "%02d:00~%02d:00", startHour, endHour)
                                 classList.add(Triple(startHour, endHour, "$formattedTime $className"))
-                                Log.d("ScheduleDebug", "Added class: $className at $formattedTime (Day: $day)")
-                            } else {
-                                Log.d("ScheduleDebug", "Skipped passed class: $className (Ended at $endHour:00, Current time: $currentHour:$currentMinute)")
                             }
                         }
                     }
@@ -433,7 +677,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        classList.sortBy { it.first } // 시작 시간 기준으로 정렬
+        classList.sortBy { it.first }
 
         if (classList.isNotEmpty()) {
             classList.forEach {
@@ -465,7 +709,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-// Weather API 인터페이스와 데이터 클래스는 변경 없음
+// Weather API 인터페이스와 데이터 클래스는 기존 코드 유지
 interface WeatherApiService {
     @GET("data/2.5/weather")
     fun getWeather(
