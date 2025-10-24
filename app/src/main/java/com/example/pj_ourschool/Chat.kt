@@ -2,7 +2,9 @@ package com.example.pj_ourschool
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -24,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.hdodenhof.circleimageview.CircleImageView // CircleImageView 임포트
 import kotlinx.coroutines.launch
+
 
 // BakingViewModel, ChatMessage, UiState는 동일 패키지에 정의되어 있어야 합니다.
 
@@ -51,6 +54,15 @@ class Chat : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // ⭐️ activity_aichat 레이아웃 사용
         setContentView(R.layout.activity_chat)
+
+        // ⭐️ 상태 표시줄 색상 설정 코드 추가
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.statusBarColor = Color.parseColor("#3557C8")
+
+            // 또는 ContextCompat을 사용하여 colors.xml에 정의된 리소스를 사용할 수 있습니다.
+            // window.statusBarColor = ContextCompat.getColor(this, R.color.my_header_color)
+        }
+
 
         // 2. UI 요소 초기화 (findViewById) - 채팅 영역
         promptEditText = findViewById(R.id.promptEditText)

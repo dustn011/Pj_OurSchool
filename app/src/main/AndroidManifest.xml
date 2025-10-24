@@ -40,7 +40,7 @@
         <!-- <activity android:name=".Campus" android:label="Campus"/> -->
         <activity android:name=".Campus" android:label="Campus"/>
         <activity android:name=".ShuttleBus" android:label="ShuttleBus"/>
-        <activity android:name=".Chat" android:label="Chat" />
+        <activity android:name=".Chat" android:label="Chat" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".Profile" android:label="Profile"/>
         <activity android:name=".SignupInfoActivity" />
         <!--<activity android:name=".MainActivity" android:label="Main"/> -->

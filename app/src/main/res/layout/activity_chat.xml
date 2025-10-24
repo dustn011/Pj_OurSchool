@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#E8EAF6"
-    android:fitsSystemWindows="true"
+    android:background="#3557C8"  android:fitsSystemWindows="true"
     tools:context=".Chat">
 
     <LinearLayout
@@ -15,10 +13,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="26dp"
+        android:padding="13dp"
         android:gravity="center_vertical"
         android:background="#3557C8"
-        >
+        android:layout_alignParentTop="true">
 
         <ImageView
             android:id="@+id/left_arrow"
@@ -34,7 +32,7 @@
             android:textSize="30sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:textColor="#FFFFFF"/>
+            android:textColor="#FFFFFF" />
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/Profile"
@@ -45,38 +43,42 @@
             android:focusable="true" />
 
     </LinearLayout>
+
     <ScrollView
         android:id="@+id/chatScrollView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="8dp"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header"
+        android:layout_above="@id/inputContainer"
         android:paddingHorizontal="16dp"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:id="@+id/messagesContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="8dp"/>
+        android:fillViewport="true"
+        android:background="#FFFFFF"> <LinearLayout
+        android:id="@+id/messagesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingVertical="8dp" />
     </ScrollView>
 
     <ProgressBar
         android:id="@+id/loadingIndicator"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:layout_gravity="center_horizontal"
-        android:visibility="gone"
-        android:layout_marginBottom="8dp"/>
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/inputContainer"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
 
     <LinearLayout
+        android:id="@+id/inputContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="0dp"
+        android:background="#FFFFFF" android:elevation="4dp">
 
         <EditText
             android:id="@+id/promptEditText"
@@ -86,13 +88,15 @@
             android:hint="@string/label_prompt"
             android:inputType="textLongMessage"
             android:maxLines="5"
-            android:textColor="@color/black"/>
+            android:textColor="@color/black"
+            />
 
         <Button
             android:id="@+id/goButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/action_go"
-            android:layout_marginStart="8dp"/>
+            android:layout_marginStart="8dp" />
     </LinearLayout>
-</LinearLayout>
+
+</RelativeLayout>
