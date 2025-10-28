@@ -1,24 +1,20 @@
 package com.example.pj_ourschool
 
-//위치 코드
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.os.Looper
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import com.google.android.gms.location.*
-
-import android.content.Intent
-import android.net.Uri // 추가
 import android.os.Bundle
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.View
+import android.widget.LinearLayout // LinearLayout import 추가
+import android.widget.RelativeLayout // RelativeLayout import 추가 (MapView의 부모 레이아웃 파라미터 타입)
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.pj_ourschool.databinding.ActivityCampusBinding
+import com.google.android.gms.location.*
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMap
 import com.kakao.vectormap.KakaoMapReadyCallback
@@ -32,7 +28,9 @@ import com.kakao.vectormap.label.LabelLayer
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import android.widget.Toast
-import de.hdodenhof.circleimageview.CircleImageView // 추가
+import de.hdodenhof.circleimageview.CircleImageView
+import android.content.Intent
+import android.net.Uri
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -60,7 +58,7 @@ class Campus : AppCompatActivity() {
     private val PROFILE_IMAGE_PREF = "profile_image_pref"
     private val KEY_PROFILE_IMAGE_URI = "profile_image_uri"
 
-    // profileImageView 타입을 ImageView에서 CircleImageView로 변경
+    // profileImageView 타입을 CircleImageView로 변경
     private lateinit var profileImageView: CircleImageView
 
 
@@ -74,16 +72,43 @@ class Campus : AppCompatActivity() {
 
         KakaoMapSdk.init(this, "8657f921e8595e3efa4a2e0663545bbe") // 여기에 실제 앱 키를 넣어주세요.
 
-        mapView = bindingCampus.mapView
+        mapView = bindingCampus.mapView // ⭐️ MapView 초기화 유지 (필수)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val leftArrow: ImageView = findViewById(R.id.left_arrow)
-        val timeImageView: ImageView = findViewById(R.id.time)
-        val busImageView: ImageView = findViewById(R.id.bus)
-        val chatImageView: ImageView = findViewById(R.id.chat)
-        profileImageView = findViewById(R.id.Profile) // CircleImageView 타입으로 초기화
-        val homeImageView: ImageView = findViewById(R.id.home)
+        // ⭐️⭐️⭐️ 하단 메뉴 동적 제어 로직 시작 ⭐️⭐️⭐️
+        val bottomMenu = bindingCampus.bottomMenu
+        val hideMenu = intent.getBooleanExtra("hideBottomMenu", false)
 
+        if (hideMenu) {
+            // 챗봇에서 "위치 보기"를 통해 진입한 경우: 하단 메뉴 숨김
+            bottomMenu.visibility = View.GONE
+
+            // MapView의 레이아웃 파라미터 수정: bottom_menu 위에 위치하는 대신, RelativeLayout의 하단에 맞춤
+            val mapParams = mapView.layoutParams as RelativeLayout.LayoutParams
+            mapParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE)
+            mapParams.removeRule(RelativeLayout.ABOVE) // 기존 bottom_menu와의 상대적인 위치 관계를 제거
+            mapView.layoutParams = mapParams
+            Log.d("CampusLayout", "챗봇 진입: 하단 메뉴 숨김, 맵 확장")
+
+        } else {
+            // 일반적인 경로로 진입한 경우: 하단 메뉴 표시 유지
+            bottomMenu.visibility = View.VISIBLE
+            // MapView는 XML에 정의된 대로 bottom_menu 위에 위치하도록 유지
+            Log.d("CampusLayout", "일반 진입: 하단 메뉴 표시, 맵 유지")
+
+            // MapView가 bottom_menu 위에 위치하도록 명시적으로 설정 (안전성 확보)
+            val mapParams = mapView.layoutParams as RelativeLayout.LayoutParams
+            mapParams.addRule(RelativeLayout.ABOVE, R.id.bottom_menu)
+            mapParams.removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+            mapView.layoutParams = mapParams
+        }
+        // ⭐️⭐️⭐️ 하단 메뉴 동적 제어 로직 끝 ⭐️⭐️⭐️
+
+        // UI 요소 초기화 (Binding 사용으로 변경 가능하나, 기존 코드와 일치하도록 유지)
+        val leftArrow: ImageView = findViewById(R.id.left_arrow)
+        profileImageView = findViewById(R.id.Profile) // CircleImageView 타입으로 초기화
+
+        // 맵 뷰 시작
         mapView.start(object : MapLifeCycleCallback() {
             override fun onMapDestroy() {
                 Log.d("KakaoMap", "onMapDestroy")
@@ -102,9 +127,10 @@ class Campus : AppCompatActivity() {
                     == PackageManager.PERMISSION_GRANTED
                 ) {
                     getCurrentLocationForNavigation() // 내비 출발지 설정을 위한 현재 위치 가져오기
-                    // Time 액티비티에서 전달된 건물 번호 확인 및 처리 (현재 위치 가져오기 전에 처리)
+
+                    // Chat 액티비티에서 전달된 건물 번호 확인 및 처리
                     intent?.getStringExtra("buildingNumber")?.let { buildingNumber ->
-                        Log.d("Campus", "Time 액티비티로부터 받은 건물 번호: $buildingNumber")
+                        Log.d("Campus", "Chat 액티비티로부터 받은 건물 번호: $buildingNumber")
                         findAndMoveCameraToBuilding(buildingNumber)
                     } ?: run {
                         // 전달된 건물 번호가 없으면 현재 위치 표시
@@ -121,6 +147,7 @@ class Campus : AppCompatActivity() {
                 // 건물 마커 추가
                 addBuildingMarkers()
 
+                // 마커 클릭 리스너
                 kakaoMap?.setOnLabelClickListener { _, _, label ->
                     val clickedBuilding = buildings.find { it.second == label.tag?.toString() }
                     if (clickedBuilding != null) {
@@ -158,21 +185,28 @@ class Campus : AppCompatActivity() {
         // **프로필 이미지 로드**
         loadProfileImageUri()
 
+        // ⭐️⭐️⭐️ 하단 메뉴 및 헤더 클릭 리스너 ⭐️⭐️⭐️
         profileImageView.setOnClickListener { startActivity(Intent(this, Profile::class.java)) }
-        homeImageView.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
-        timeImageView.setOnClickListener { startActivity(Intent(this, Time::class.java)) }
-        busImageView.setOnClickListener { startActivity(Intent(this, ShuttleBus::class.java)) }
-        chatImageView.setOnClickListener { startActivity(Intent(this, Chat::class.java)) }
         leftArrow.setOnClickListener { finish() }
+
+        // 하단 메뉴 리스너 (bindingCampus를 사용하여 안전하게 접근)
+        bindingCampus.home.setOnClickListener { startActivity(Intent(this, MainActivity::class.java)) }
+        bindingCampus.time.setOnClickListener { startActivity(Intent(this, Time::class.java)) }
+        bindingCampus.bus.setOnClickListener { startActivity(Intent(this, ShuttleBus::class.java)) }
+        bindingCampus.chat.setOnClickListener {
+            // 챗봇 버튼을 눌러 Chat으로 갈 때만 기존 내용이 유지되도록 finish() 사용.
+            // (Chat에서 Campus로 올 때 Chat은 Paused 상태로 유지되므로, finish()로 돌아가면 내용이 유지됨)
+            finish()
+        }
+        // ⭐️⭐️⭐️ 리스너 수정 끝 ⭐️⭐️⭐️
     }
 
     override fun onResume() {
         super.onResume()
-        // 액티비티가 재개될 때 프로필 이미지를 다시 로드하여 최신 상태 유지
         loadProfileImageUri()
     }
 
-    // 건물 번호로 위치를 찾아 카메라를 이동하는 함수
+    // 건물 번호로 위치를 찾아 카메라를 이동하는 함수 (기존과 동일)
     private fun findAndMoveCameraToBuilding(buildingNumber: String) {
         val targetBuilding = buildings.find { it.first == buildingNumber }
         if (targetBuilding != null) {
@@ -186,7 +220,6 @@ class Campus : AppCompatActivity() {
             getCurrentLocation()
         }
     }
-
 
 
     private fun getCurrentLocation() {
@@ -217,7 +250,6 @@ class Campus : AppCompatActivity() {
         labelLayer?.let {
             currentLocationMarker?.remove()
 
-            // ✅ 내 위치 마커에만 다른 아이콘 적용
             val markerStyle = LabelStyle.from(R.drawable.map_icon_selected)
                 .setAnchorPoint(0.5f, 1.0f)
 
@@ -282,7 +314,7 @@ class Campus : AppCompatActivity() {
                             .getString("address_name")
 
                         runOnUiThread {
-                            // callback(address) // 기존 토스트 메시지를 표시하던 부분 삭제
+                            // callback(address)
                         }
                     }
                 }

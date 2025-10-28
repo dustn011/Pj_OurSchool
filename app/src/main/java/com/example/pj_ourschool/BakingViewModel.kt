@@ -38,21 +38,30 @@ class BakingViewModel : ViewModel() {
         }
     }
 
-    // ⭐️⭐️ 추가 함수: Activity 로직에서 미리 정의된 응답을 추가할 수 있도록 함 ⭐️⭐️
+    // ⭐️⭐️ 수정된 함수: Activity 로직에서 미리 정의된 응답을 추가할 수 있도록 함 ⭐️⭐️
     fun addPredefinedResponse(prompt: String, response: String) {
         if (isBotResponding) return
 
-        // 1. 사용자 메시지와 응답을 순차적으로 목록에 추가
         val currentMessages = getCurrentMessages()
-        val updatedMessages = currentMessages +
-                ChatMessage(prompt, isUser = true) +
-                ChatMessage(response, isUser = false)
+        val messagesToAdd = mutableListOf<ChatMessage>()
+
+        // ⭐️⭐️⭐️ 핵심 수정: prompt가 비어있지 않은 경우에만 사용자 메시지를 추가합니다. ⭐️⭐️⭐️
+        if (prompt.isNotBlank()) {
+            messagesToAdd.add(ChatMessage(prompt, isUser = true))
+        }
+
+        // 챗봇 응답은 항상 추가
+        messagesToAdd.add(ChatMessage(response, isUser = false))
+
+        val updatedMessages = currentMessages + messagesToAdd
 
         // 2. UI 상태 업데이트 (Success 상태로 전환)
         _uiState.value = UiState.Success(updatedMessages)
 
         // 3. Gemini 히스토리에 추가 (선택 사항: 다음 AI 응답에 영향을 줄 수 있음)
-        history.add(content { text(prompt) })
+        if (prompt.isNotBlank()) {
+            history.add(content { text(prompt) })
+        }
         history.add(content { text(response) })
     }
 

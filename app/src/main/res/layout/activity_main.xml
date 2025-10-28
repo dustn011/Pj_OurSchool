@@ -295,26 +295,6 @@
                             android:textColor="@android:color/black"/>
                     </LinearLayout>
 
-                    <LinearLayout
-                        android:id="@+id/ai_chatbot_wj"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center_horizontal"
-                        android:padding="8dp"
-                        android:layout_marginEnd="16dp"> <ImageView
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:src="@drawable/ai_chatbot_wj"
-                        android:contentDescription="AI챗봇"
-                        />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="AI챗봇"
-                            android:textSize="14sp"
-                            android:textColor="@android:color/black"/>
-                    </LinearLayout>
 
                 </LinearLayout>
             </HorizontalScrollView>
@@ -428,7 +408,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="채팅"
+                android:text="챗봇"
                 android:textColor="@android:color/black"
                 android:textSize="22sp" />
 
